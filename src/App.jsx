@@ -20,9 +20,9 @@ import Login from './pages/login/Login';
 import StaffPage from "./pages/staff/StaffPage";
 import MemberPage from './pages/member/MemberPage';
 
-import OrderDetail from './pages/oders/orderdetail';
-import OrderStatus from './pages/oders/orderstatus';
-import OrderTracking from './pages/oders/ordertracking';
+import OrderDetail from './pages/oders/OrderDetail';
+import OrderStatus from './pages/oders/OrderStatus';
+import OrderTracking from './pages/oders/OrderTracking';
 
 import ContactPage from './pages/contact/ContactPage';
 import PricingTable from './pages/pricing/PricingTable';
