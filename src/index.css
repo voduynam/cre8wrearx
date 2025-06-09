@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@layer utilities {
+  .text-primary {
+    color: #1d4ed8;
+  }
+  .bg-primary {
+    background-color: #1d4ed8;
+  }
+  .text-background {
+    color: #ffffff;
+  }
+  .bg-background {
+    background-color: #ffffff;
+  }
+  .text-text {
+    color: #1a1a1a;
+  }
+  .bg-text {
+    background-color: #1a1a1a;
+  }
+}
+
+@layer components {
+  body {
+    @apply bg-background text-text font-poppins;
+  }
+
+  a {
+    @apply font-medium no-underline transition duration-200;
+    color: #1d4ed8;
+  }
+  a:hover {
+    @apply text-red-500;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-text ;
+  }
+  button {
+    @apply text-white py-2 px-4 rounded-md transition duration-200 border-none shadow-none;
+    background-color: #1d4ed8;
+  }
+  button:hover {
+    @apply bg-neutral-700;
+  }
+  nav {
+    @apply flex justify-center text-white py-2 border-none shadow-none m-0;
+  }
+  nav a {
+    @apply px-4 py-2 rounded-md transition duration-200 text-lg border-none shadow-none;
+  }
+  nav a:hover {
+    @apply bg-neutral-700;
+  }
+  .header-container {
+    @apply m-0 p-0 border-none shadow-none;
+  }
+  .card {
+    @apply rounded-md p-4 text-center m-0 border-none shadow-none;
+    background-color: #ffffff;
+  }
+}
