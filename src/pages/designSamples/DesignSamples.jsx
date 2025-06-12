@@ -5,6 +5,7 @@ import { addToCart as addToCartAction } from "../../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Search, Filter, ChevronDown, ChevronUp, ShoppingCart, Eye } from 'lucide-react';
 
 const DesignSamples = () => {
   const dispatch = useDispatch();
@@ -102,86 +103,204 @@ const DesignSamples = () => {
   });
 
   return (
-    <div className="bg-[#0f0f0f] min-h-screen text-white p-4">
+    <div className="min-h-screen bg-black">
       <ToastContainer />
-      <div className="max-w-7xl mx-auto grid grid-cols-5 gap-6">
-        <div className="col-span-1">
-          <input
-            type="text"
-            placeholder="Tìm kiếm thiết kế..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 mb-4 rounded-md text-black focus:outline-none"
-          />
-          <div className="mb-4">
-            <button 
-              className="w-full text-left bg-[#1f1f1f] p-2 rounded-md mb-2 hover:bg-[#333] transition-colors" 
-              onClick={() => toggleFilter("categories")}
-            >
-              DANH MỤC {openFilter === "categories" ? "-" : "+"}
-            </button>
-            {openFilter === "categories" && (
-              <ul className="pl-4">
-                {categories.map((category) => (
-                  <li key={category.categoryId} className="py-1 flex items-center">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedFilters.has(category.categoryId)}
-                      onChange={() => {
-                        console.log("Selecting category:", {
-                          id: category.categoryId,
-                          name: category.categoryName
-                        });
-                        toggleOption(category.categoryId);
-                      }} 
-                      className="mr-2"
-                    />
-                    <span className="text-sm">
-                      {category.categoryName} (ID: {category.categoryId})
-                    </span>
-                  </li>
+      
+      {/* Header */}
+      <div className="bg-gradient-to-r bg-black backdrop-blur-sm border-b">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4">
+            Bộ sưu tập thiết kế
+          </h1>
+          <p className="text-lg text-slate-300 max-w-2xl">
+            Khám phá những mẫu thiết kế đẹp mắt và chuyên nghiệp cho dự án của bạn
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Filter Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-8 space-y-6">
+              {/* Search */}
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/30 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Search className="w-5 h-5 text-blue-400" />
+                  Tìm kiếm
+                </h3>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm thiết kế..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Categories Filter */}
+              <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-600/30 rounded-xl overflow-hidden">
+                <button 
+                  className="w-full text-left p-6 hover:bg-slate-700/30 transition-colors border-b border-slate-600/30" 
+                  onClick={() => toggleFilter("categories")}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-5 h-5 text-blue-400" />
+                      <span className="text-lg font-semibold text-white">Danh mục</span>
+                    </div>
+                    {openFilter === "categories" ? (
+                      <ChevronUp className="w-5 h-5 text-slate-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-slate-400" />
+                    )}
+                  </div>
+                </button>
+                {openFilter === "categories" && (
+                  <div className="p-6 pt-0">
+                    <div className="space-y-3">
+                      {categories.map((category) => (
+                        <label 
+                          key={category.categoryId} 
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-700/30 transition-colors cursor-pointer"
+                        >
+                          <input 
+                            type="checkbox" 
+                            checked={selectedFilters.has(category.categoryId)}
+                            onChange={() => {
+                              console.log("Selecting category:", {
+                                id: category.categoryId,
+                                name: category.categoryName
+                              });
+                              toggleOption(category.categoryId);
+                            }} 
+                            className="w-4 h-4 text-blue-500 bg-slate-700 border-slate-500 rounded focus:ring-blue-500"
+                          />
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-white">
+                              {category.categoryName}
+                            </span>
+                            <span className="text-xs text-slate-400 ml-2">
+                              ID: {category.categoryId}
+                            </span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="lg:col-span-4">
+            {/* Results Count */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-white">
+                {filteredProducts.length} sản phẩm được tìm thấy
+              </h2>
+              {selectedFilters.size > 0 && (
+                <button
+                  onClick={() => setSelectedFilters(new Set())}
+                  className="text-sm text-blue-400 hover:text-blue-300 underline"
+                >
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
+
+            {/* Products Grid */}
+            {filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                  <div
+                    key={product.productId} 
+                    className="group relative overflow-hidden bg-gradient-to-br from-slate-800/50 via-slate-800/40 to-slate-700/30 backdrop-blur-sm border border-slate-600/30 rounded-xl transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/20 hover:-translate-y-2 hover:border-blue-400/30"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    <div className="relative">
+                      <div className="relative overflow-hidden">
+                        <img
+                          src={product.image && product.image.startsWith("http") 
+                            ? product.image 
+                            : `https://localhost:7163/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
+                          alt={product.productName}
+                          className="w-full h-72 object-cover transition-all duration-500 group-hover:scale-110"
+                          onError={(e) => e.target.src = "/fallback-image.jpg"} 
+                        />
+                        
+                        {/* Overlay with actions */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end justify-center p-4">
+                          <div className="flex gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            <button
+                              onClick={() => navigate(`/product/${product.productId}`)}
+                              className="flex items-center gap-1 px-3 py-2 bg-slate-800/90 backdrop-blur-sm hover:bg-slate-700 text-white text-sm rounded-lg border border-slate-600/50 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              Xem chi tiết
+                            </button>
+                            <button
+                              onClick={() => handleAddToCart(product)}
+                              className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                            >
+                              <ShoppingCart className="w-4 h-4" />
+                              Thêm vào giỏ
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Price badge */}
+                        <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                          {product.price.toLocaleString()} VND
+                        </div>
+                      </div>
+
+                      <div className="p-6">
+                        <h3 
+                          className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors duration-200 cursor-pointer line-clamp-2 mb-2"
+                          onClick={() => navigate(`/product/${product.productId}`)}
+                        >
+                          {product.productName}
+                        </h3>
+                        
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-slate-400">
+                            Mã sản phẩm: #{product.productId.toString().slice(-6)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="mb-4 text-6xl">🔍</div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Không tìm thấy sản phẩm nào
+                </h3>
+                <p className="text-slate-400 mb-4">
+                  Thử điều chỉnh từ khóa tìm kiếm hoặc bộ lọc danh mục
+                </p>
+                {(searchTerm || selectedFilters.size > 0) && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedFilters(new Set());
+                    }}
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    Xóa tất cả bộ lọc
+                  </button>
+                )}
+              </div>
             )}
           </div>
-        </div>
-
-        {/* Hiển thị danh sách sản phẩm */}
-        <div className="col-span-4 grid grid-cols-3 gap-6">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
-              <div
-                key={product.productId} 
-                className="bg-[#1f1f1f] p-4 rounded-md shadow-md hover:scale-105 transition-transform"
-              >
-                <img
-                   src={product.image && product.image.startsWith("http") 
-                      ? product.image 
-                    : `https://localhost:7163/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
-                    alt={product.productName}
-                    className="w-full h-60 object-cover rounded-md mb-2 hover:opacity-80 transition-opacity cursor-pointer"
-                    onClick={() => navigate(`/product/${product.productId}`)}
-                    onError={(e) => e.target.src = "/fallback-image.jpg"} 
-                />
-
-                <h3 
-                  className="text-center text-xl mb-2 cursor-pointer hover:text-indigo-400 transition-colors"
-                  onClick={() => navigate(`/product/${product.productId}`)}
-                >
-                  {product.productName}
-                </h3>
-                <p className="text-center text-lg font-semibold mb-2">{product.price.toLocaleString()} VND</p>
-                {/* <button 
-                  className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-700 transition-colors" 
-                  onClick={() => handleAddToCart(product)}
-                >
-                  🛒 Thêm vào giỏ hàng
-                </button> */}
-              </div>
-            ))
-          ) : (
-            <p className="col-span-3 text-center text-gray-400">Không tìm thấy sản phẩm nào</p>
-          )}
         </div>
       </div>
     </div>
