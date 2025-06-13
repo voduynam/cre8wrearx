@@ -106,6 +106,8 @@ const AppContent = () => {
           <Route path="/blog/b" element={<HandPage />} />
           <Route path="/blog/b/:id" element={<HandDetail />} />
           <Route path="/blog/b/:id" element={<HandDetail />} />
+          <Route path="/payment-success" element={<CheckPaymentSuccess />} />
+          <Route path="/payment-failed" element={<CheckPaymentFailed />} />
           {/* <Route path="/order-detail" element={<OrderDetail />} /> */}
 
           {/* Protected routes for Staff (roleId = 2) */}
@@ -128,8 +130,7 @@ const AppContent = () => {
           <Route path="/order-status" element={<ProtectedRoute allowedRoles={[3]}><OrderStatus /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute allowedRoles={[3]}><ProfilePage /></ProtectedRoute>} />
           <Route path="/payment-callback" element={<PaymentCallback />} />
-          <Route path="/payment-success" element={<CheckPaymentSuccess />} />
-          <Route path="/payment-failed" element={<CheckPaymentFailed />} />
+          
 
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" />} />

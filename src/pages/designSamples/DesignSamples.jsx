@@ -5,7 +5,7 @@ import { addToCart as addToCartAction } from "../../redux/slices/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Search, Filter, ChevronDown, ChevronUp, ShoppingCart, Eye } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, ShoppingCart, Eye, Edit } from 'lucide-react';
 
 const DesignSamples = () => {
   const dispatch = useDispatch();
@@ -241,6 +241,13 @@ const DesignSamples = () => {
                             >
                               <Eye className="w-4 h-4" />
                               Xem chi tiết
+                            </button>
+                            <button
+                              onClick={() => navigate(`/designer?productId=${product.productId}&image=${encodeURIComponent(product.image)}&name=${encodeURIComponent(product.productName)}&price=${product.price}`)}
+                              className="flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Tùy chỉnh
                             </button>
                             <button
                               onClick={() => handleAddToCart(product)}

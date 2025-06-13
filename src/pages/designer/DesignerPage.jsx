@@ -4,9 +4,11 @@ import { Stage, Layer, Text, Image, Transformer } from 'react-konva';
 import useImage from 'use-image';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../../redux/slices/cartSlice';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaUndo, FaRedo, FaSave, FaEye, FaSearch, FaShare, FaCheck, FaTrash } from 'react-icons/fa';
 import JSZip from 'jszip';
 import Konva from 'konva';
+import { toast } from 'react-hot-toast';
 
 // Import shirt images
 import frontShirt from '../../assets copy/shirt-front.png';
@@ -73,6 +75,16 @@ const PRINT_SPECIFICATIONS = {
 };
 
 const DesignerPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  
+  // Get product data from URL parameters
+  const productId = searchParams.get('productId');
+  const productImage = searchParams.get('image');
+  const productName = searchParams.get('name');
+  const productPrice = parseInt(searchParams.get('price')) || 0;
+
   const [activeView, setActiveView] = useState('front');
   const [selectedModel, setSelectedModel] = useState('white');
   const [shirtColor, setShirtColor] = useState({ r: 255, g: 255, b: 255 });
@@ -137,6 +149,31 @@ const DesignerPage = () => {
   const [rightImage] = useImage(SHIRT_MODELS[selectedModel].images.right);
 
   const sizes = ['S', 'M', 'L'];
+
+  // Update initial state with product data
+  useEffect(() => {
+    if (productImage) {
+      // Load the product image as a decoration
+      const decorationId = Date.now().toString();
+      const newDecoration = {
+        id: decorationId,
+        src: productImage,
+        x: 120,
+        y: 90,
+        width: 160,
+        height: 160,
+        scale: 1
+      };
+
+      setViewStates(prev => ({
+        ...prev,
+        front: {
+          ...prev.front,
+          decorations: [newDecoration]
+        }
+      }));
+    }
+  }, [productImage]);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -284,8 +321,9 @@ const DesignerPage = () => {
     // Generate high-resolution design data for each view
     const designData = {
       id: Date.now(),
-      name: 'Custom Shirt',
-      price: 30,
+      productId: productId, // Include the original product ID
+      name: productName || 'Custom Design',
+      price: productPrice + 5000, // Add customization fee
       size: selectedSize,
       model: selectedModel,
       shirtColor: shirtColor,
@@ -293,6 +331,13 @@ const DesignerPage = () => {
       views: {},
       created_at: new Date().toISOString(),
       status: 'pending',
+      isCustomized: true, // Flag to indicate this is a customized product
+      originalProduct: {
+        id: productId,
+        name: productName,
+        price: productPrice,
+        image: productImage
+      },
       printingInstructions: {
         technology: PRINT_SPECIFICATIONS.printTechnology,
         dpi: PRINT_SPECIFICATIONS.dpi,
@@ -336,89 +381,22 @@ const DesignerPage = () => {
     // Add to cart in Redux
     dispatch(addToCart(designData));
 
-    // Log detailed specifications
-    console.group(' Design Specifications');
-    
-    console.log(' Basic Information:', {
-      id: designData.id,
-      name: designData.name,
-      price: designData.price,
-      created_at: designData.created_at
+    // Show success message and navigate back
+    toast.success('Đã thêm thiết kế tùy chỉnh vào giỏ hàng!', {
+      position: "top-right",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
     });
 
-    console.log(' Shirt Details:', {
-      size: designData.size,
-      model: designData.model,
-      color: designData.shirtColor
-    });
-
-    console.log(' Print Specifications:', {
-      size: PRINT_SPECIFICATIONS[selectedSize],
-      dpi: PRINT_SPECIFICATIONS.dpi,
-      technology: PRINT_SPECIFICATIONS.printTechnology
-    });
-
-    console.group('🎯 Design Details by View');
-    Object.entries(designData.views).forEach(([view, data]) => {
-      console.group(`View: ${view}`);
-      console.log('Text:', {
-        content: data.text.content,
-        position: data.text.position,
-        color: data.text.color,
-        scale: data.text.scale,
-        fontSize: data.text.fontSize
-      });
-      console.log('Decorations:', data.decorations.map(dec => ({
-        position: dec.position,
-        dimensions: dec.dimensions
-      })));
-      console.groupEnd();
-    });
-    console.groupEnd();
-
-    console.log('🎯 Print Area Dimensions:', {
-      printArea: PRINT_SPECIFICATIONS[selectedSize].printArea,
-      totalSize: {
-        width: PRINT_SPECIFICATIONS[selectedSize].width,
-        height: PRINT_SPECIFICATIONS[selectedSize].height
-      }
-    });
-
-    console.groupEnd();
-
-    // Database entry structure
-    const databaseEntry = {
-      design_id: designData.id,
-      customer_id: 'current_user_id',
-      order_details: {
-        size: designData.size,
-        model: designData.model,
-        shirt_color: designData.shirtColor,
-        price: designData.price,
-        status: designData.status
-      },
-      printing_specifications: {
-        ...designData.printSpecifications,
-        ...designData.printingInstructions
-      },
-      design_data: {
-        views: Object.entries(designData.views).map(([viewName, viewData]) => ({
-          view_name: viewName,
-          text_elements: viewData.text,
-          decorations: viewData.decorations,
-          high_res_render: viewData.finalRender
-        }))
-      },
-      metadata: {
-        created_at: designData.created_at,
-        updated_at: new Date().toISOString(),
-        version: '1.0'
-      }
-    };
-
-    console.log('📦 Database Entry Structure:', databaseEntry);
-
-    alert('Design added to cart and saved for printing!');
+    // Navigate back to products page after a short delay
+    setTimeout(() => {
+      navigate('/design-samples');
+    }, 2000);
   };
 
   const handleDecorationDragEnd = (e, decorationId) => {
@@ -496,6 +474,16 @@ const DesignerPage = () => {
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Product Info Header */}
+        {productName && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-800">Tùy chỉnh sản phẩm: {productName}</h2>
+            <p className="text-gray-600">Giá gốc: {productPrice.toLocaleString()} VND</p>
+            <p className="text-gray-600">Phí tùy chỉnh: 5,000 VND</p>
+            <p className="text-gray-600 font-semibold">Tổng cộng: {(productPrice + 5000).toLocaleString()} VND</p>
+          </div>
+        )}
+
         {/* Model Selection */}
         <div className="mb-6">
           <h3 className="font-semibold mb-2">Select Shirt Style</h3>

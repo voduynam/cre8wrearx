@@ -695,7 +695,7 @@ const Cart = () => {
   const handleVNPayPayment = async (orderId) => {
     try {
       // Gọi API để lấy URL thanh toán VNPAY
-      const response = await fetch(`https://localhost:7163/CreatePaymentUrl?orderId=${orderId}`);
+      const response = await fetch(`https://localhost:7163/VNPay/CreatePaymentUrl_Card?orderId=${orderId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
