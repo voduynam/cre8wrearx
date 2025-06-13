@@ -7,7 +7,7 @@ import images from '../../data/ImageSlider';
 import ProductGrid from '../../components/slider/ProductGrid';
 import ProductGrid2 from '../../components/slider/ProductGrid2';
 import FeedbackSlider from '../../components/slider/Slider2';
-import FloatingContactButtons from '../../components/FloatingContactButtons ';
+import FloatingContactButtons from '../../components/FloatingContactButtons';
 
 
 const Home = () => {
@@ -56,7 +56,7 @@ const Home = () => {
 
     </div>
 
-  );
+  );z
 };
 
 export default Home;
