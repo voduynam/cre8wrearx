@@ -107,7 +107,7 @@ const DesignSamples = () => {
       <ToastContainer />
       
       {/* Header */}
-      <div className="bg-gradient-to-r bg-black backdrop-blur-sm border-b">
+      <div className="bg-gradient-to-r bg-black backdrop-blur-sm border-b'">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4">
             Bộ sưu tập thiết kế
@@ -183,9 +183,7 @@ const DesignSamples = () => {
                             <span className="text-sm font-medium text-white">
                               {category.categoryName}
                             </span>
-                            <span className="text-xs text-slate-400 ml-2">
-                              ID: {category.categoryId}
-                            </span>
+                          
                           </div>
                         </label>
                       ))}
@@ -267,6 +265,11 @@ const DesignSamples = () => {
                         >
                           {product.productName}
                         </h3>
+                       <h4 className="text-sm text-gray-300 group-hover:text-blue-300 transition-colors duration-200 line-clamp-2">
+  {product.description}
+</h4>
+
+                       
                         
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-slate-400">

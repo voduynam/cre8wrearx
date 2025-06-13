@@ -613,7 +613,7 @@ const Cart = () => {
   // );
   const [quantities, setQuantities] = useState(
     cartItems.reduce(
-      (acc, item) => ({ ...acc, [item.productId]: Math.max(item.quantity, 10) }),
+      (acc, item) => ({ ...acc, [item.productId]: Math.max(item.quantity, 1) }),
       {}
     )
   );
@@ -676,7 +676,7 @@ const Cart = () => {
   // };
 
   const handleQuantityChange = (productId, newQuantity) => {
-    const updatedQuantity = Math.max(newQuantity, 10); // Đảm bảo số lượng tối thiểu là 10
+    const updatedQuantity = Math.max(newQuantity, 1); // Đảm bảo số lượng tối thiểu là 10
 
     setQuantities((prev) => ({
       ...prev,
@@ -695,7 +695,7 @@ const Cart = () => {
   const handleVNPayPayment = async (orderId) => {
     try {
       // Gọi API để lấy URL thanh toán VNPAY
-      const response = await fetch(`https://phamdangtuc-001-site1.ntempurl.com/CreatePaymentUrl?orderId=${orderId}`);
+      const response = await fetch(`https://localhost:7163/CreatePaymentUrl?orderId=${orderId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -1074,7 +1074,7 @@ const Cart = () => {
                         <button
                           onClick={() => handleQuantityChange(item.productId, quantities[item.productId] - 1)}
                           className="bg-gray-300 px-2 py-1 rounded"
-                          disabled={quantities[item.productId] <= 10} // Không cho giảm dưới 10
+                        // Không cho giảm dưới 10
                         >
                           ➖
                         </button>
@@ -1083,7 +1083,7 @@ const Cart = () => {
                           value={quantities[item.productId]}
                           onChange={(e) => handleQuantityChange(item.productId, Number(e.target.value))}
                           className="w-12 text-center mx-2 border rounded"
-                          min="10" // Chặn nhập số nhỏ hơn 10
+                         
                         />
                         <button
                           onClick={() => handleQuantityChange(item.productId, quantities[item.productId] + 1)}

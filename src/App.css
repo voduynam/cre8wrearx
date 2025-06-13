@@ -1,9 +1,11 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100vw;         /* Chiều rộng toàn màn hình */
+  height: 100vh;        /* Chiều cao toàn màn hình */
+  margin: auto;
+  padding: 0;
   text-align: center;
 }
+
 
 .logo {
   height: 6em;

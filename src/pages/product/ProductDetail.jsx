@@ -40,10 +40,10 @@ const ProductDetail = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        
+
         if (data.status === 1 && data.data) {
           setProduct(data.data);
-          
+
           // Fetch category information if categoryId exists
           if (data.data.categoryId) {
             try {
@@ -79,7 +79,7 @@ const ProductDetail = () => {
     }
   }, [id]);
 
-  
+
 
   const handleAddToCart = () => {
     if (!selectedColor) {
@@ -113,7 +113,7 @@ const ProductDetail = () => {
 
         // Chuyển hướng sang trang giỏ hàng sau khi thêm thành công
         setTimeout(() => {
-        navigate("/cart");
+          navigate("/cart");
         }, 1200);
 
       } catch (err) {
@@ -121,7 +121,7 @@ const ProductDetail = () => {
       }
     }
   };
-  
+
 
   if (loading) {
     return (
@@ -140,7 +140,7 @@ const ProductDetail = () => {
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           <p className="text-red-600 font-medium text-lg mb-4">{error}</p>
-          <button 
+          <button
             onClick={() => navigate('/design/mau-co-san')}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center mx-auto"
           >
@@ -157,7 +157,7 @@ const ProductDetail = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600 text-lg">Không tìm thấy thông tin sản phẩm</p>
-          <button 
+          <button
             onClick={() => navigate('/design/mau-co-san')}
             className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
@@ -185,8 +185,8 @@ const ProductDetail = () => {
             {/* Hình ảnh sản phẩm */}
             <div className="relative">
               <img
-                src={product.image && product.image.startsWith("http") 
-                  ? product.image 
+                src={product.image && product.image.startsWith("http")
+                  ? product.image
                   : `https://phamdangtuc-001-site1.ntempurl.com/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
                 alt={product.productName}
                 className="w-full h-[500px] object-contain rounded-lg"
@@ -200,12 +200,12 @@ const ProductDetail = () => {
             {/* Thông tin sản phẩm */}
             <div className="space-y-6">
               <h1 className="text-3xl font-bold text-gray-900">{product.productName}</h1>
-              
+              <h2 className="text-xl text-left text-gray-900 ">{product.description}</h2>
               <div className="flex items-center space-x-2 text-2xl font-semibold text-indigo-600">
                 <FaTag className="text-xl" />
                 <span>{product.price.toLocaleString('vi-VN')} VND</span>
               </div>
-{/* 
+              {/* 
               <div className="flex items-center space-x-2 text-gray-600">
                 <FaBox className="text-xl" />
                 <span>Còn lại: {product.stockInStorage} sản phẩm</span>

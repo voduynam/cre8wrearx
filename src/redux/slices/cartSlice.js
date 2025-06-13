@@ -37,7 +37,7 @@ const cartSlice = createSlice({
         existingItem.quantity += 1;
         existingItem.totalPrice = existingItem.price * existingItem.quantity; //Cập nhật tổng giá tiền
       } else {
-        const minQuantity = 10; //Số lượng tối thiểu khi thêm mới
+        const minQuantity = 1; //Số lượng tối thiểu khi thêm mới
         state.items.push({
           ...action.payload,
           quantity: minQuantity,
@@ -81,7 +81,7 @@ const cartSlice = createSlice({
       const item = state.items.find(item => item.productId === productId);
 
       if (item) {
-        item.quantity = Math.max(quantity, 10); // Giữ số lượng tối thiểu là 10
+        item.quantity = Math.max(quantity, 1); // Giữ số lượng tối thiểu là 10
         item.totalPrice = item.price * item.quantity; // Cập nhật tổng giá tiền ngay
         console.log("Cập nhật số lượng sản phẩm:", item);
         // saveCartToStorage(state.items);
