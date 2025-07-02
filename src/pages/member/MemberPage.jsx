@@ -29,7 +29,7 @@ const MemberPage = () => {
     }
 
     try {
-      const response = await fetch("https://phamdangtuc-001-site1.ntempurl.com/api/users/profile", {
+      const response = await fetch("http://hai3004-001-site1.anytempurl.com/api/users/profile", {
         method: "GET",
         headers: {
           "Accept": "application/json",

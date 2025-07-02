@@ -1,390 +1,163 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { SketchPicker } from 'react-color';
-import { Stage, Layer, Text, Image, Transformer } from 'react-konva';
+import React, { useState, useEffect, useRef } from 'react';
+import { Stage, Layer, Text, Image } from 'react-konva';
 import useImage from 'use-image';
-import { useDispatch } from 'react-redux';
-import { addToCart } from '../../redux/slices/cartSlice';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { FaUndo, FaRedo, FaSave, FaEye, FaSearch, FaShare, FaCheck, FaTrash } from 'react-icons/fa';
-import JSZip from 'jszip';
-import Konva from 'konva';
-import { toast } from 'react-hot-toast';
-
-// Import shirt images
-import frontShirt from '../../assets copy/shirt-front.png';
-import backShirt from '../../assets copy/shirt-back.png';
-import leftShirt from '../../assets copy/shirt-left.png';
-import rightShirt from '../../assets copy/shirt-right.png';
-
-// Import different shirt models (you'll need to add these image files)
-import frontShirtV2 from '../../assets copy/shirt-v2-front.png';
-import backShirtV2 from '../../assets copy/shirt-v2-back.png';
-import leftShirtV2 from '../../assets copy/shirt-v2-left.png';
-import rightShirtV2 from '../../assets copy/shirt-v2-right.png';
-
-
-const SHIRT_MODELS = {
-  white: {
-    name: 'White',
-    color: '#FFFFFF',
-    images: {
-      front: frontShirt,
-      back: backShirt,
-      left: leftShirt,
-      right: rightShirt,
-    }
-  },
-  black: {
-    name: 'Black',
-    color: '#000000',
-    images: {
-      front: frontShirtV2,
-      back: backShirtV2,
-      left: leftShirtV2,
-      right: rightShirtV2,
-    }
-  }
-};
-
-const DecorationImage = ({ decoration, isSelected, onSelect, onDragEnd, onTransformEnd }) => {
-  const [image] = useImage(decoration.src);
-
-  return image && (
-    <Image
-      id={decoration.id}
-      image={image}
-      x={decoration.x}
-      y={decoration.y}
-      width={decoration.width}
-      height={decoration.height}
-      draggable={false}
-      onClick={() => onSelect(decoration.id)}
-    />
-  );
-};
-
-// Add this type of structure for the database
-const PRINT_SPECIFICATIONS = {
-  sizes: {
-    'S': { width: 35, height: 45, printArea: { x: 10, y: 10, width: 25, height: 35 } },
-    'M': { width: 40, height: 50, printArea: { x: 12, y: 12, width: 28, height: 38 } },
-    'L': { width: 45, height: 55, printArea: { x: 14, y: 14, width: 31, height: 41 } }
-  },
-  dpi: 300, // Printing resolution
-  printTechnology: 'DTG', // Direct to Garment printing
-};
+import { useDispatch } from "react-redux";
+import { addToCart as addToCartAction } from "../../redux/slices/cartSlice";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const DesignerPage = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
-  
-  // Get product data from URL parameters
-  const productId = searchParams.get('productId');
-  const productImage = searchParams.get('image');
-  const productName = searchParams.get('name');
-  const productPrice = parseInt(searchParams.get('price')) || 0;
-
-  const [activeView, setActiveView] = useState('front');
-  const [selectedModel, setSelectedModel] = useState('white');
-  const [shirtColor, setShirtColor] = useState({ r: 255, g: 255, b: 255 });
-  const [viewStates, setViewStates] = useState({
-    front: {
-      text: 'Your Text',
-      textPosition: { x: 105, y: 200 },
-      textColor: '#000000',
-      textScale: 1,
-      decorations: [{
-        id: 'default-tshirt-icon',
-        src: '/path/to/tshirt-icon.png',
-        x: 10,
-        y: 40,
-        width: 20,
-        height: 20,
-        scale: 1
-      }]
-    },
-    back: {
-      text: 'Your Text',
-      textPosition: { x: 105, y: 100 },
-      textColor: '#000000',
-      textScale: 1,
-      decorations: [{
-        id: 'default-tshirt-icon-back',
-        src: '/path/to/tshirt-icon.png',
-        x: 170,
-        y: 40,
-        width: 90,
-        height: 90,
-        scale: 1
-      }]
-    },
-    left: {
-      text: '',
-      textPosition: { x: 105, y: 200 },
-      textColor: '#000000',
-      textScale: 1,
-      decorations: []
-    },
-    right: {
-      text: '',
-      textPosition: { x: 105, y: 200 },
-      textColor: '#000000',
-      textScale: 1,
-      decorations: []
-    }
-  });
-
-  const [selectedSize, setSelectedSize] = useState('M');
-  const [selectedId, setSelectedId] = useState(null);
-  
+  const [products, setProducts] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [productImageUrl, setProductImageUrl] = useState(null);
+  const [productBaseImage] = useImage(productImageUrl, 'anonymous');
+  const [text, setText] = useState('Your Text');
+  const [textColor, setTextColor] = useState('#000000');
+  const [decoration, setDecoration] = useState(null); // { src, x, y, width, height }
   const stageRef = useRef();
-  const transformerRef = useRef();
+  const [textProps, setTextProps] = useState({ x: 100, y: 200 });
   const dispatch = useDispatch();
+  const [recipientName, setRecipientName] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [notes, setNotes] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [shippingMethod, setShippingMethod] = useState("Tiêu chuẩn");
+  const [shippingFee, setShippingFee] = useState(20000);
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [description, setDescription] = useState("");
 
-  // Load shirt images for all views based on selected model
-  const [frontImage] = useImage(SHIRT_MODELS[selectedModel].images.front);
-  const [backImage] = useImage(SHIRT_MODELS[selectedModel].images.back);
-  const [leftImage] = useImage(SHIRT_MODELS[selectedModel].images.left);
-  const [rightImage] = useImage(SHIRT_MODELS[selectedModel].images.right);
+  const allowedArea = { x: 80, y: 80, width: 150, height: 320 };
 
-  const sizes = ['S', 'M', 'L'];
-
-  // Update initial state with product data
+  // Fetch products from API
   useEffect(() => {
-    if (productImage) {
-      // Load the product image as a decoration
-      const decorationId = Date.now().toString();
-      const newDecoration = {
-        id: decorationId,
-        src: productImage,
-        x: 120,
-        y: 90,
-        width: 160,
-        height: 160,
-        scale: 1
-      };
+    fetch('https://localhost:7163/api/Product')
+      .then(res => res.json())
+      .then(data => setProducts(data.data.$values || []));
+  }, []);
 
-      setViewStates(prev => ({
-        ...prev,
-        front: {
-          ...prev.front,
-          decorations: [newDecoration]
-        }
-      }));
+  // When product is selected, set image URL
+  useEffect(() => {
+    if (!selectedProductId) return;
+    const selectedProduct = products.find(p => p.productId === Number(selectedProductId));
+    if (selectedProduct?.image) {
+      // Use Cloudinary link directly if present
+      setProductImageUrl(selectedProduct.image);
     }
-  }, [productImage]);
+  }, [selectedProductId, products]);
 
-  const handleImageUpload = async (e) => {
+  // Tính ngày giao hàng tự động (hiện tại + 3 ngày)
+  useEffect(() => {
+    const now = new Date();
+    now.setDate(now.getDate() + 3);
+    setDeliveryDate(now.toISOString().slice(0, 16)); // yyyy-MM-ddTHH:mm
+  }, []);
+
+  // Cập nhật phí ship theo phương thứcs
+  useEffect(() => {
+    if (shippingMethod === "Tiêu chuẩn") setShippingFee(20000);
+    else if (shippingMethod === "Nhanh") setShippingFee(30000);
+    else if (shippingMethod === "Hỏa tốc") setShippingFee(50000);
+  }, [shippingMethod]);
+
+  // Handle decoration image upload
+  const handleDecorationUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       alert('Please upload an image under 5MB!');
       return;
     }
-
-    // Kiểm tra xem view hiện tại đã có decoration chưa
-   
-
-    try {
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-
-      const img = new window.Image();
-      await new Promise((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = (e) => reject(e);
-        img.src = base64;
-      });
-
-      // Điều chỉnh kích thước dựa vào view
-      let width, height;
-      if (activeView === 'back') {
-        width = 130;  // Kích thước lớn cho mặt sau
-        height = (img.height / img.width) * width;
-        if (height > 200) {
-          const ratio = 200 / height;
-          width *= ratio;
-          height *= ratio;
-        }
-      } else if (activeView === 'left' || activeView === 'right') {
-        width = 90;   // Kích thước trung bình cho mặt bên
-        height = (img.height / img.width) * width;
-        if (height > 120) {
-          const ratio = 120 / height;
-          width *= ratio;
-          height *= ratio;
-        }
-      } else {
-        width = 60;   // Kích thước nhỏ cho mặt trước
-        height = (img.height / img.width) * width;
-        if (height > 80) {
-          const ratio = 80 / height;
-          width *= ratio;
-          height *= ratio;
-        }
-      }
-
-      // Xác định vị trí dựa trên view hiện tại
-      let defaultPosition = {
-        x: activeView === 'front' ? 120 :           // Góc trái cho mặt trước
-           activeView === 'back' ? 138 :            // Giữa cho mặt sau
-           activeView === 'left' ? 168 :             // Gần mép trái cho mặt trái
-           130,                                     // Gần mép phải cho mặt phải
-        y: activeView === 'back' ? 170 :            // Thấp hơn cho mặt sau
-           activeView === 'left' || activeView === 'right' ? 250 :  // Vị trí cho mặt bên
-           90                                       // Vị trí cho mặt trước
-      };
-
-      const decorationId = Date.now().toString();
-      const newDecoration = {
-        id: decorationId,
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const img = new window.Image();
+    img.onload = () => {
+      setDecoration({
         src: base64,
-        x: defaultPosition.x,
-        y: defaultPosition.y,
-        width,
-        height,
-        scale: 1
-      };
-
-      // Thay thế hoàn toàn mảng decorations thay vì thêm mới
-      setViewStates(prev => ({
-        ...prev,
-        [activeView]: {
-          ...prev[activeView],
-          decorations: [newDecoration]  // Chỉ giữ một decoration
-        }
-      }));
-
-      setSelectedId(decorationId);
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Failed to upload image. Please try again.');
-    }
-  };
-
-  const getCurrentImage = () => {
-    switch (activeView) {
-      case 'front':
-        return frontImage;
-      case 'back':
-        return backImage;
-      case 'left':
-        return leftImage;
-      case 'right':
-        return rightImage;
-      default:
-        return frontImage;
-    }
-  };
-
-  const handleDownload = async () => {
-    const zip = new JSZip();
-    const views = ['front', 'back', 'left', 'right'];
-    
-    // Store current view
-    const currentView = activeView;
-    
-    try {
-      // Generate images for all views
-      for (const view of views) {
-        setActiveView(view);
-        // Wait for stage to update
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const dataURL = stageRef.current.toDataURL();
-        const data = dataURL.split(',')[1];
-        zip.file(`design-${view}.png`, data, { base64: true });
-      }
-      
-      // Generate and download zip
-      const content = await zip.generateAsync({ type: 'blob' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = 'shirt-designs.zip';
-      link.click();
-    } catch (error) {
-      console.error('Error generating designs:', error);
-      alert('Error generating designs. Please try again.');
-    } finally {
-      // Restore original view
-      setActiveView(currentView);
-    }
-  };
-
-  const saveDesignToCart = () => {
-    // Generate high-resolution design data for each view
-    const designData = {
-      id: Date.now(),
-      productId: productId, // Include the original product ID
-      name: productName || 'Custom Design',
-      price: productPrice + 5000, // Add customization fee
-      size: selectedSize,
-      model: selectedModel,
-      shirtColor: shirtColor,
-      printSpecifications: PRINT_SPECIFICATIONS[selectedSize],
-      views: {},
-      created_at: new Date().toISOString(),
-      status: 'pending',
-      isCustomized: true, // Flag to indicate this is a customized product
-      originalProduct: {
-        id: productId,
-        name: productName,
-        price: productPrice,
-        image: productImage
-      },
-      printingInstructions: {
-        technology: PRINT_SPECIFICATIONS.printTechnology,
-        dpi: PRINT_SPECIFICATIONS.dpi,
-        notes: 'Handle with care for color accuracy'
-      }
+        x: 120,
+        y: 120,
+        width: 60,
+        height: 60
+      });
     };
+    img.src = base64;
+  };
 
-    // Save data for each view
-    ['front', 'back', 'left', 'right'].forEach(view => {
-      const viewState = viewStates[view];
-      designData.views[view] = {
-        // Base image data
-        baseImage: SHIRT_MODELS[selectedModel].images[view],
-        // Text elements
-        text: {
-          content: viewState.text,
-          position: viewState.textPosition,
-          color: viewState.textColor,
-          scale: viewState.textScale,
-          fontSize: 24 * viewState.textScale,
-        },
-        // Decorations/Images
-        decorations: viewState.decorations.map(dec => ({
-          imageData: dec.src,
-          position: { x: dec.x, y: dec.y },
-          dimensions: {
-            width: dec.width,
-            height: dec.height,
-            scale: dec.scale
-          }
-        })),
-        // High resolution render of the final design
-        finalRender: stageRef.current?.toDataURL({
-          pixelRatio: 3,
-          mimeType: 'image/png',
-          quality: 1
-        })
-      };
+  // Handle drag decoration
+  const handleDecorationDragEnd = (e) => {
+    setDecoration(prev => prev ? { ...prev, x: e.target.x(), y: e.target.y() } : null);
+  };
+
+  // Remove decoration
+  const removeDecoration = () => setDecoration(null);
+
+  // Submit design
+  const handleOrder = async () => {
+    if (!selectedProductId) return alert('Chọn sản phẩm!');
+    if (!recipientName || !deliveryAddress) return alert('Vui lòng nhập đầy đủ thông tin người nhận!');
+    const dataUrl = stageRef.current.toDataURL({
+      mimeType: "image/jpeg",
+      quality: 0.95
     });
 
-    // Add to cart in Redux
-    dispatch(addToCart(designData));
+    const payload = {
+      productId: selectedProductId,
+      userId: 2,
+      shirtColor: "Red",
+      fullImage: null,
+      base64Image: dataUrl,
+      designMetadata: JSON.stringify({
+        canvasWidth: 400,
+        canvasHeight: 500,
+        elements: [
+          { type: "text", value: text }
+        ]
+      }),
+      description,
+      recipientName,
+      deliveryAddress,
+      shippingMethod,
+      shippingFee,
+      notes,
+      quantity,
+      deliveryDate
+    };
 
-    // Show success message and navigate back
-    toast.success('Đã thêm thiết kế tùy chỉnh vào giỏ hàng!', {
+    console.log('Payload gửi API:', payload);
+
+    await fetch('https://localhost:7163/api/customizeproducts/create-with-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    alert('Đã gửi đơn hàng!');
+  };
+
+  const handleTextDragEnd = (e) => {
+    let x = e.target.x();
+    let y = e.target.y();
+    x = Math.max(allowedArea.x, Math.min(x, allowedArea.x + allowedArea.width));
+    y = Math.max(allowedArea.y, Math.min(y, allowedArea.y + allowedArea.height));
+    setTextProps({ x, y });
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedProductId) {
+      toast.error('Vui lòng chọn sản phẩm!');
+      return;
+    }
+    const selectedProduct = products.find(p => p.productId === Number(selectedProductId));
+    if (!selectedProduct) {
+      toast.error('Không tìm thấy sản phẩm!');
+      return;
+    }
+    dispatch(addToCartAction(selectedProduct));
+    toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
       position: "top-right",
-      autoClose: 2000,
+      autoClose: 1000,
       hideProgressBar: false,
       closeOnClick: true,
       pauseOnHover: true,
@@ -392,301 +165,185 @@ const DesignerPage = () => {
       progress: undefined,
       theme: "light",
     });
-
-    // Navigate back to products page after a short delay
-    setTimeout(() => {
-      navigate('/design-samples');
-    }, 2000);
   };
-
-  const handleDecorationDragEnd = (e, decorationId) => {
-    const node = e.target;
-    setViewStates(prev => ({
-      ...prev,
-      [activeView]: {
-        ...prev[activeView],
-        decorations: prev[activeView].decorations.map(dec =>
-          dec.id === decorationId
-            ? { ...dec, x: node.x(), y: node.y() }
-            : dec
-        )
-      }
-    }));
-  };
-
-  const handleTransformEnd = (e, decorationId) => {
-    const node = e.target;
-    setViewStates(prev => ({
-      ...prev,
-      [activeView]: {
-        ...prev[activeView],
-        decorations: prev[activeView].decorations.map(dec =>
-          dec.id === decorationId
-            ? {
-                ...dec,
-                width: node.width() * node.scaleX(),
-                height: node.height() * node.scaleY(),
-                x: node.x(),
-                y: node.y(),
-                scale: node.scaleX()
-              }
-            : dec
-        )
-      }
-    }));
-  };
-
-  const handleTextDragEnd = (e) => {
-    setViewStates(prev => ({
-      ...prev,
-      [activeView]: {
-        ...prev[activeView],
-        textPosition: { x: e.target.x(), y: e.target.y() }
-      }
-    }));
-  };
-
-  const handleZoomText = () => {}
-
-  const handleZoomDecoration = () => {}
-
-  const removeDecoration = (decorationId) => {
-    setViewStates(prev => ({
-      ...prev,
-      [activeView]: {
-        ...prev[activeView],
-        decorations: prev[activeView].decorations.filter(dec => dec.id !== decorationId)
-      }
-    }));
-    setSelectedId(null);
-  };
-
-  React.useEffect(() => {
-    if (selectedId && transformerRef.current) {
-      const node = stageRef.current.findOne('#' + selectedId);
-      if (node) {
-        transformerRef.current.nodes([node]);
-        transformerRef.current.getLayer().batchDraw();
-      }
-    }
-  }, [selectedId]);
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <div className="p-4 max-w-3xl mx-auto">
+      <ToastContainer />
       <div className="bg-white rounded-lg shadow-lg p-6">
-        {/* Product Info Header */}
-        {productName && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-800">Tùy chỉnh sản phẩm: {productName}</h2>
-            <p className="text-gray-600">Giá gốc: {productPrice.toLocaleString()} VND</p>
-            <p className="text-gray-600">Phí tùy chỉnh: 5,000 VND</p>
-            <p className="text-gray-600 font-semibold">Tổng cộng: {(productPrice + 5000).toLocaleString()} VND</p>
-          </div>
-        )}
+        <h3 className="font-semibold mb-2">Chọn sản phẩm</h3>
+        <select className="mb-4 p-2 border rounded" onChange={e => setSelectedProductId(Number(e.target.value))} value={selectedProductId}>
+          <option value="">Chọn sản phẩm</option>
+          {products.map(p => (
+            <option key={p.productId} value={p.productId}>{p.productName}</option>
+          ))}
+        </select>
 
-        {/* Model Selection */}
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Select Shirt Style</h3>
-          <div className="flex space-x-4">
-            {Object.entries(SHIRT_MODELS).map(([key, model]) => (
-              <button
-                key={key}
-                className={`w-12 h-12 rounded-full border-2 ${
-                  selectedModel === key ? 'border-blue-500' : 'border-gray-300'
-                } hover:border-blue-500 transition-all duration-200`}
-                style={{ 
-                  backgroundColor: model.color,
-                  boxShadow: selectedModel === key ? '0 0 0 2px rgba(59, 130, 246, 0.5)' : 'none'
-                }}
-                onClick={() => setSelectedModel(key)}
-                title={model.name}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex justify-between items-center mb-6 border-b pb-4">
-          <div className="flex space-x-4">
-            <button className="p-2 hover:bg-gray-100 rounded" onClick={handleDownload} title="Save All Views">
-              <FaSave />
-            </button>
-          </div>
-        </div>
-
-        {/* View Selection */}
-        <div className="flex justify-center mb-6">
-          <div className="flex space-x-4">
-            {['front', 'back', 'left', 'right'].map((view) => (
-              <button
-                key={view}
-                className={`px-4 py-2 rounded ${
-                  activeView === view ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                }`}
-                onClick={() => setActiveView(view)}
-              >
-                {view.charAt(0).toUpperCase() + view.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="relative">
-            <div className="flex justify-center items-center p-4">
-              <Stage 
-                width={400} 
-                height={500} 
-                ref={stageRef}
-                onClick={(e) => {
-                  const clickedOnEmpty = e.target === e.target.getStage();
-                  if (clickedOnEmpty) {
-                    setSelectedId(null);
-                  }
-                }}
-              >
-                <Layer>
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+          <div className="flex justify-center items-center p-4">
+            <Stage width={400} height={500} ref={stageRef}>
+              <Layer>
+                {productBaseImage && (
+                  <Image image={productBaseImage} width={400} height={500} />
+                )}
+                {decoration && (
                   <Image
-                    image={getCurrentImage()}
-                    width={400}
-                    height={500}
-                    filters={[Konva.Filters.RGB]}
-                    red={shirtColor.r}
-                    green={shirtColor.g}
-                    blue={shirtColor.b}
+                    image={(() => {
+                      const img = new window.Image();
+                      img.src = decoration.src;
+                      return img;
+                    })()}
+                    x={decoration.x}
+                    y={decoration.y}
+                    width={decoration.width}
+                    height={decoration.height}
+                    draggable
+                    onDragEnd={handleDecorationDragEnd}
+                    dragBoundFunc={pos => {
+                      const minX = allowedArea.x;
+                      const maxX = allowedArea.x + allowedArea.width;
+                      const minY = allowedArea.y;
+                      const maxY = allowedArea.y + allowedArea.height;
+                      return {
+                        x: Math.max(minX, Math.min(pos.x, maxX)),
+                        y: Math.max(minY, Math.min(pos.y, maxY))
+                      };
+                    }}
                   />
-                  {viewStates[activeView].decorations.map((decoration) => (
-                    <DecorationImage
-                      key={decoration.id}
-                      decoration={decoration}
-                      isSelected={selectedId === decoration.id}
-                      onSelect={setSelectedId}
-                      onDragEnd={(e) => handleDecorationDragEnd(e, decoration.id)}
-                      onTransformEnd={(e) => handleTransformEnd(e, decoration.id)}
-                    />
-                  ))}
-                  <Text 
-                    text={viewStates[activeView].text}
-                    fontSize={24}
-                    fill={viewStates[activeView].textColor}
-                    x={viewStates[activeView].textPosition.x}
-                    y={viewStates[activeView].textPosition.y}
-                    width={200}
-                    align="center"
-                    draggable={false}
-                  />
-                  {selectedId && (
-                    <Transformer
-                      ref={transformerRef}
-                      boundBoxFunc={(oldBox, newBox) => {
-                        const maxSize = 200;
-                        const minSize = 20;
-                        if (
-                          newBox.width < minSize ||
-                          newBox.height < minSize ||
-                          newBox.width > maxSize ||
-                          newBox.height > maxSize
-                        ) {
-                          return oldBox;
-                        }
-                        return newBox;
-                      }}
-                    />
-                  )}
-                </Layer>
-              </Stage>
-            </div>
+                )}
+                <Text
+                  text={text}
+                  fontSize={20}
+                  fill={textColor}
+                  x={textProps.x}
+                  y={textProps.y}
+                  draggable
+                  onDragEnd={e => setTextProps({ x: e.target.x(), y: e.target.y() })}
+                  dragBoundFunc={pos => {
+                    // Clamp x, y vào vùng allowedArea
+                    const minX = allowedArea.x;
+                    const maxX = allowedArea.x + allowedArea.width;
+                    const minY = allowedArea.y;
+                    const maxY = allowedArea.y + allowedArea.height;
+                    return {
+                      x: Math.max(minX, Math.min(pos.x, maxX)),
+                      y: Math.max(minY, Math.min(pos.y, maxY))
+                    };
+                  }}
+                />
+              </Layer>
+            </Stage>
           </div>
-
-          <div className="space-y-6">
-            
+          <div className="space-y-6 w-full">
             <div>
-              <h3 className="font-semibold mb-2">Size</h3>
-              <div className="flex space-x-4">
-                {sizes.map((size) => (
-                  <button
-                    key={size}
-                    className={`px-4 py-2 rounded ${
-                      selectedSize === size ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                    }`}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-semibold mb-2">Add Text</h3>
+              <h3 className="font-semibold mb-2">Thêm chữ</h3>
               <input
                 type="text"
-                value={viewStates[activeView].text}
-                onChange={(e) => setViewStates(prev => ({
-                  ...prev,
-                  [activeView]: { ...prev[activeView], text: e.target.value }
-                }))}
+                value={text}
+                onChange={e => setText(e.target.value)}
                 className="w-full p-2 border rounded"
-                placeholder="Enter your text here"
+                placeholder="Nhập chữ lên áo"
               />
               <div className="mt-2">
-                <label className="block mb-2">Text Color:</label>
-                <SketchPicker
-                  color={viewStates[activeView].textColor}
-                  onChangeComplete={(color) => setViewStates(prev => ({
-                    ...prev,
-                    [activeView]: { ...prev[activeView], textColor: color.hex }
-                  }))}
-                />
+                <label className="block mb-2">Màu chữ:</label>
+                <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} />
               </div>
             </div>
-
             <div>
-              <h3 className="font-semibold mb-2">Add Decoration</h3>
-              {viewStates[activeView].decorations.length === 0 ? (
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="w-full p-2 border rounded"
-                  onClick={(e) => e.target.value = null}
-                />
+              <h3 className="font-semibold mb-2">Thêm hình dán</h3>
+              {!decoration ? (
+                <input type="file" accept="image/*" onChange={handleDecorationUpload} className="w-full p-2 border rounded" />
               ) : (
-                <div className="flex space-x-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="w-full p-2 border rounded"
-                    onClick={(e) => e.target.value = null}
-                  />
-                  <button
-                    onClick={() => {
-                      setViewStates(prev => ({
-                        ...prev,
-                        [activeView]: {
-                          ...prev[activeView],
-                          decorations: []
-                        }
-                      }));
-                      setSelectedId(null);
-                    }}
-                    className="px-4  bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Remove Image
-                  </button>
+                <div className="flex space-x-2 items-center">
+                  <button onClick={removeDecoration} className="px-4 bg-red-500 text-white rounded hover:bg-red-600">Xóa hình</button>
                 </div>
               )}
-              <p className="text-sm text-gray-500 mt-1">
-                Upload an image to decorate the shirt. Supported formats: PNG, JPG, GIF (under 5MB)
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Chỉ hỗ trợ PNG, JPG, GIF (dưới 5MB)</p>
             </div>
-
+            <div className="space-y-3">
+              <h3 className="font-semibold mb-2">Thông tin người nhận</h3>
+              <input
+                type="text"
+                value={recipientName}
+                onChange={e => setRecipientName(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+                placeholder="Tên người nhận"
+              />
+              <input
+                type="text"
+                value={deliveryAddress}
+                onChange={e => setDeliveryAddress(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+                placeholder="Địa chỉ giao hàng"
+              />
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+                placeholder="Số điện thoại người nhận"
+                rows={2}
+              />
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+                placeholder="Nhập số lượng size và mô tả tùy ý"
+                rows={2}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold mb-2">Số lượng:</h3>
+              <button
+                type="button"
+                className="px-3 py-1 bg-gray-200 rounded text-lg"
+                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+              >-</button>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
+                className="w-16 p-2 border rounded text-center"
+              />
+              <button
+                type="button"
+                className="px-3 py-1 bg-gray-200 rounded text-lg"
+                onClick={() => setQuantity(q => q + 1)}
+              >+</button>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Phương thức vận chuyển</h3>
+              <select
+                className="w-full p-2 border rounded mb-2"
+                value={shippingMethod}
+                onChange={e => setShippingMethod(e.target.value)}
+              >
+                <option value="Tiêu chuẩn">Tiêu chuẩn (20,000đ)</option>
+                <option value="Nhanh">Nhanh (30,000đ)</option>
+                <option value="Hỏa tốc">Hỏa tốc (50,000đ)</option>
+              </select>
+              <div className="text-gray-700 mb-2">Phí vận chuyển: <b>{shippingFee.toLocaleString()}đ</b></div>
+            </div>
+            {/* <div>
+              <h3 className="font-semibold mb-2">Ngày giao dự kiến</h3>
+              <input
+                type="datetime-local"
+                value={deliveryDate}
+                readOnly
+                className="w-full p-2 border rounded bg-gray-100 text-gray-700"
+              />
+            </div> */}
+            {/* <button
+              onClick={handleAddToCart}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition"
+            >
+              Thêm vào giỏ hàng
+            </button> */}
             <button
-              onClick={saveDesignToCart}
+              onClick={handleOrder}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition"
             >
-              Add to Cart
+              Đặt hàng
             </button>
           </div>
         </div>

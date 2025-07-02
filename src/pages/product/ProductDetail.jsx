@@ -35,7 +35,7 @@ const ProductDetail = () => {
         setError(null);
 
         // Fetch product details
-        const response = await fetch(`https://localhost:7163/api/Product/${id}`);
+        const response = await fetch(`http://hai3004-001-site1.anytempurl.com/api/Product/${id}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -47,7 +47,7 @@ const ProductDetail = () => {
           // Fetch category information if categoryId exists
           if (data.data.categoryId) {
             try {
-              const categoryResponse = await fetch(`https://localhost:7163/api/Category/${data.data.categoryId}`);
+              const categoryResponse = await fetch(`http://hai3004-001-site1.anytempurl.com/api/Category/${data.data.categoryId}`);
               if (!categoryResponse.ok) {
                 throw new Error(`HTTP error! status: ${categoryResponse.status}`);
               }
@@ -187,7 +187,7 @@ const ProductDetail = () => {
               <img
                 src={product.image && product.image.startsWith("http")
                   ? product.image
-                  : `https://phamdangtuc-001-site1.ntempurl.com/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
+                  : `http://hai3004-001-site1.anytempurl.com/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
                 alt={product.productName}
                 className="w-full h-[500px] object-contain rounded-lg"
                 onError={(e) => {

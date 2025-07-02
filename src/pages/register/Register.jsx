@@ -474,8 +474,8 @@ const RegisterLogin = () => {
 
     try {
       const url = isRegistering
-        ? "https://localhost:7163/api/users"
-        : "https://localhost:7163/api/login";
+        ? "http://hai3004-001-site1.anytempurl.com/api/users"
+        : "http://hai3004-001-site1.anytempurl.com/api/login";
 
       const response = await fetch(url, {
         method: "POST",

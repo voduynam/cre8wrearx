@@ -187,7 +187,7 @@ const OrderDetail = () => {
               {/* Customer Information */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Thông Tin Người Đặt</h2>
-                <div className="space-y-2">
+                <div className="space-y-2 text-left">
                   <p><span className="font-medium">Tên:</span> {order?.recipientName}</p>
                   <p><span className="font-medium">Địa chỉ:</span> {order?.deliveryAddress}</p>
                   <p><span className="font-medium">Số điện thoại:</span> {order?.notes || "N/A"}</p>
@@ -227,25 +227,28 @@ const OrderDetail = () => {
                         }}
                       />
                     </div>
+                    <a href={customizeProduct?.fullImage}
+                      target="_blank"
+                      rel="noopener noreferrer" className="text-xl font-semibold text-blue-900"> Link ảnh</a>
                   </div>
                   {/* Product Details */}
                   <div className="md:w-2/3 space-y-4">
                     <div>
                       <h3 className="text-xl font-semibold text-gray-900">Sản phẩm tùy chỉnh</h3>
                       <div className="mt-2 space-y-2">
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 text-center" >
                           <span className="font-medium">Tên sản phẩm:</span> {order.productName || "N/A"}
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 text-center">
                           <span className="font-medium">Mô tả:</span> {order.description || "N/A"}
                         </p>
                         {/* <p className="text-gray-600"> */}
-                          {/* <span className="font-medium">Mô tả tùy chỉnh:</span> {order.customDescription || "N/A"} */}
+                        {/* <span className="font-medium">Mô tả tùy chỉnh:</span> {order.customDescription || "N/A"} */}
                         {/* </p> */}
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 text-center" >
                           <span className="font-medium">Màu áo:</span> {order.shirtColor || "N/A"}
                         </p>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 text-center" >
                           <span className="font-medium">Số lượng:</span> {order.quantity}
                         </p>
                       </div>

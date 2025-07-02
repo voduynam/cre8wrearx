@@ -23,7 +23,7 @@ const DesignSamples = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('https://localhost:7163/api/Category');
+        const response = await fetch('http://hai3004-001-site1.anytempurl.com/api/Category');
         const data = await response.json();
         if (data.status === 1 && data.data.$values) {
           const categoriesData = data.data.$values;

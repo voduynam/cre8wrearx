@@ -44,7 +44,7 @@ const CheckoutConfirmation = () => {
     };
 
     try {
-      const response = await fetch("https://phamdangtuc-001-site1.ntempurl.com/api/Orders", {
+      const response = await fetch("http://hai3004-001-site1.anytempurl.com/api/Orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderPayload),

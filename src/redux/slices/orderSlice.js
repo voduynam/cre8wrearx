@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_BASE_URL = 'http://localhost:7163/api/Orders';
+const API_BASE_URL = 'https://localhost:7163/api/Orders';
 // const API_BASE_URL = 'https://phamdangtuc-001-site1.ntempurl.com/api/Orders';
 // Async thunk để đặt hàng
 export const placeOrder = createAsyncThunk('order/placeOrder', async (orderData, { rejectWithValue }) => {
