@@ -91,6 +91,8 @@ const Login = () => {
 
       if (role === "staff") {
         navigate("/order-tracking");
+      } else if (role === "admin") {
+        navigate("/admin/dashboard");
       } else {
         navigate("/");
       }

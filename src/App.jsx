@@ -46,7 +46,9 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import PaymentCallback from "./pages/payment/PaymentCallback";
 import CheckPaymentSuccess from "./pages/checkout/CheckPaymentSucces";
 import CheckPaymentFailed from "./pages/checkout/CheckPaymentFaild";
-import AdminRevenueChart from "./pages/admin/AdminDashBoard";
+import AdminDashboard from "./pages/admin/AdminDashBoard";
+import AdminLayout from "./components/admin/AdminLayout";
+import UserManagement from "./pages/admin/UserManagement";
 
 // Component bảo vệ route dựa trên role
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -211,8 +213,10 @@ const AppContent = () => {
           <Route path='/payment-callback' element={<PaymentCallback />} />
 
           {/*  Admin router */}
-          <Route path='/admin/dashboard' element={<AdminRevenueChart />} />
-
+          <Route path='/admin' element={<AdminLayout />}>
+            <Route path='dashboard' element={<AdminDashboard />} />
+            <Route path='users' element={<UserManagement />} />
+          </Route>
           {/* Fallback route */}
           <Route path='*' element={<Navigate to='/' />} />
         </Routes>
