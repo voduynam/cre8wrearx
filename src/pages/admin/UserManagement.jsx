@@ -18,7 +18,11 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
 
-  // ✅ Fetch users - giữ nguyên
+  // 🔐 Reset password
+  const [resetUser, setResetUser] = useState(null);
+  const [resetPasswordModal, setResetPasswordModal] = useState(false);
+  const [resetForm] = Form.useForm();
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -55,19 +59,15 @@ const UserManagement = () => {
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
-
-      // Convert gender string to boolean if needed
       if (typeof values.gender === "string") {
         values.gender = values.gender === "true";
       }
 
       if (editingUser) {
-        console.log("Editing ID:", editingUser.userId); // ✅ Debug ID
-
         await axiosInstance.put(`/users/${editingUser.userId}`, values);
         message.success("Cập nhật người dùng thành công");
       } else {
-        await axiosInstance.post("/users", values); // 🔁 không có "/api"
+        await axiosInstance.post("/users", values);
         message.success("Thêm người dùng thành công");
       }
 
@@ -88,55 +88,101 @@ const UserManagement = () => {
     }
   };
 
+  const showResetModal = (user) => {
+    setResetUser(user);
+    setResetPasswordModal(true);
+    resetForm.resetFields();
+  };
+
+  const handleResetPassword = async () => {
+    try {
+      const { password } = await resetForm.validateFields();
+      await axiosInstance.put(`/users/recover/${resetUser.userId}`, {
+        newPassword: password,
+      });
+      message.success("Đặt lại mật khẩu thành công");
+      setResetPasswordModal(false);
+      fetchUsers();
+    } catch {
+      message.error("Lỗi khi đặt lại mật khẩu");
+    }
+  };
+
   const columns = [
     {
       title: "Tên đăng nhập",
       dataIndex: "username",
+      key: "username",
+      align: "middle",
+      ellipsis: true,
     },
     {
       title: "Họ tên",
       dataIndex: "fullName",
+      key: "fullName",
+      align: "middle",
+      ellipsis: true,
     },
     {
       title: "Email",
       dataIndex: "email",
+      key: "email",
+      align: "middle",
+      ellipsis: true,
     },
     {
       title: "Số điện thoại",
       dataIndex: "phone",
+      key: "phone",
+      align: "middle",
+      ellipsis: true,
     },
     {
       title: "Địa chỉ",
       dataIndex: "address",
+      key: "address",
+      align: "middle",
+      ellipsis: true,
     },
     {
       title: "Giới tính",
       dataIndex: "gender",
-      render: (gender) => (gender ? "Nam" : "Nữ"),
+      key: "gender",
+      align: "middle",
+      render: (gender) => (
+        <span className='font-medium text-gray-700'>
+          {gender ? "Nam" : "Nữ"}
+        </span>
+      ),
     },
     {
       title: "Hành động",
+      key: "action",
+      align: "middle",
       render: (_, record) => (
-        <>
-          <Button type='link' onClick={() => showModal(record)}>
+        <div className='flex gap-1 flex-wrap'>
+          <Button size='small' onClick={() => showModal(record)}>
             Sửa
           </Button>
           <Popconfirm
             title='Xác nhận xóa?'
             onConfirm={() => handleDelete(record.userId)}>
-            <Button type='link' danger>
-              Xoá
+            <Button size='small' danger>
+              Xóa
             </Button>
           </Popconfirm>
-        </>
+          <Button size='small' onClick={() => showResetModal(record)}>
+            Reset mật khẩu
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
-    <div>
-      <div className='flex justify-between items-center mb-4'>
-        <h2 className='text-2xl font-bold'>Quản lý người dùng</h2>
+    <div className='p-6 bg-gray-50 min-h-screen'>
+      <div className='flex justify-between items-center mb-6'>
+        <h2 className='text-2xl font-bold text-gray-800'>Quản lý người dùng</h2>
         <Button type='primary' onClick={() => showModal()}>
           Thêm người dùng
         </Button>
@@ -148,8 +194,11 @@ const UserManagement = () => {
         rowKey='userId'
         loading={loading}
         bordered
+        pagination={{ pageSize: 8 }}
+        className='shadow rounded-md overflow-hidden bg-white'
       />
 
+      {/* Modal Thêm / Sửa */}
       <Modal
         title={editingUser ? "Cập nhật người dùng" : "Thêm người dùng"}
         open={isModalVisible}
@@ -217,6 +266,24 @@ const UserManagement = () => {
               <Select.Option value={true}>Nam</Select.Option>
               <Select.Option value={false}>Nữ</Select.Option>
             </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal Reset Password */}
+      <Modal
+        title={`Đặt lại mật khẩu cho ${resetUser?.username}`}
+        open={resetPasswordModal}
+        onOk={handleResetPassword}
+        onCancel={() => setResetPasswordModal(false)}
+        okText='Cập nhật'
+        cancelText='Hủy'>
+        <Form layout='vertical' form={resetForm}>
+          <Form.Item
+            label='Mật khẩu mới'
+            name='password'
+            rules={[{ required: true, message: "Vui lòng nhập mật khẩu mới" }]}>
+            <Input.Password />
           </Form.Item>
         </Form>
       </Modal>
