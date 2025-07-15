@@ -4,6 +4,20 @@ import { useSelector } from "react-redux";
 import axiosInstance from "../../utils/axiosInstance";
 // import "./OrderDetail.css";
 
+// Hàm chuyển đổi key từ PascalCase sang camelCase
+function toCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(v => toCamelCase(v));
+  } else if (obj !== null && obj.constructor === Object) {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      result[camelKey] = toCamelCase(obj[key]);
+      return result;
+    }, {});
+  }
+  return obj;
+}
+
 const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -16,7 +30,6 @@ const OrderDetail = () => {
 
   useEffect(() => {
     fetchOrderDetails();
-    fetchOrderStages();
   }, [orderId]);
 
   const fetchOrderDetails = async () => {
@@ -25,7 +38,7 @@ const OrderDetail = () => {
       console.log("Order Response Data:", orderResponse.data);
 
       if (orderResponse.data) {
-        const orderData = orderResponse.data;
+        const orderData = toCamelCase(orderResponse.data); // chuyển đổi key
 
         // Lấy thông tin customize product
         try {
@@ -33,18 +46,25 @@ const OrderDetail = () => {
           console.log("Customize Product Response:", customizeResponse.data);
 
           // Kết hợp dữ liệu từ cả order và customize product
+          const customizeData = toCamelCase(customizeResponse.data);
           const enrichedOrder = {
             ...orderData,
-            productName: customizeResponse.data?.product?.productName || "N/A",
-            description: customizeResponse.data?.description || "",
-            customDescription: customizeResponse.data?.description || "",
-            shirtColor: orderData.shirtColor || customizeResponse.data?.shirtColor || "N/A",
-            customizeProduct: customizeResponse.data
+            productName: customizeData?.product?.productName || "N/A",
+            description: customizeData?.description || "",
+            customDescription: customizeData?.description || "",
+            shirtColor: orderData.shirtColor || customizeData?.shirtColor || "N/A",
+            customizeProduct: customizeData,
+            orderStages: orderData.orderStages?.$values || [],
+            payments: orderData.payments?.$values || [],
           };
 
           console.log("Enriched Order:", enrichedOrder);
           setOrder(enrichedOrder);
           setCustomizeProduct(enrichedOrder.customizeProduct);
+          // Lấy orderStages và payments từ orderData
+          setOrderStages(orderData.orderStages?.$values || []);
+          // Nếu cần dùng payments:
+          // setPayments(orderData.payments?.$values || []);
         } catch (customizeErr) {
           console.error("Error fetching customize product:", customizeErr);
           setOrder({
@@ -53,8 +73,11 @@ const OrderDetail = () => {
             description: orderData.description || "",
             customDescription: "",
             shirtColor: orderData.shirtColor || "N/A",
-            customizeProduct: null
+            customizeProduct: null,
+            orderStages: orderData.orderStages?.$values || [],
+            payments: orderData.payments?.$values || [],
           });
+          setOrderStages(orderData.orderStages?.$values || []);
         }
       }
     } catch (err) {
@@ -65,19 +88,7 @@ const OrderDetail = () => {
     }
   };
 
-  const fetchOrderStages = async () => {
-    try {
-      const response = await axiosInstance.get("/order-stages");
-      if (response.data?.data?.$values) {
-        const orderStages = response.data.data.$values.filter(
-          stage => stage.orderId === Number(orderId)
-        );
-        setOrderStages(orderStages.sort((a, b) => new Date(b.updatedDate) - new Date(a.updatedDate)));
-      }
-    } catch (err) {
-      console.error("Error fetching order stages:", err);
-    }
-  };
+  // Xóa fetchOrderStages
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -114,6 +125,13 @@ const OrderDetail = () => {
     if (!imagePath) return "/placeholder.jpg";
     if (imagePath.startsWith("http")) return imagePath;
     return `https://phamdangtuc-001-site1.ntempurl.com/uploads/${imagePath.split("\\").pop()}`;
+  };
+
+  // Lấy tổng tiền đã thanh toán online (nếu có payments)
+  const getOnlinePaidAmount = () => {
+    if (!order || !order.payments || !Array.isArray(order.payments)) return 0;
+    // Có thể lấy tổng DepositPaid hoặc TotalAmount tùy logic
+    return order.payments.reduce((sum, p) => sum + (p.depositPaid || 0), 0);
   };
 
   if (loading) {
@@ -162,6 +180,13 @@ const OrderDetail = () => {
     );
   }
 
+  let stageName = "Chưa có trạng thái";
+  if (Array.isArray(orderStages) && orderStages.length > 0) {
+    // Sắp xếp giảm dần theo updatedDate
+    const sortedStages = [...orderStages].sort((a, b) => new Date(b.updatedDate) - new Date(a.updatedDate));
+    stageName = sortedStages[0].orderStageName || "Chưa có trạng thái";
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -202,12 +227,13 @@ const OrderDetail = () => {
                 <div className="space-y-2">
                   <p>
                     <span className="font-medium">Trạng thái hiện tại:</span>{" "}
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStageStyle(orderStages[0]?.orderStageName)}`}>
-                      {orderStages[0]?.orderStageName || "Chờ xử lý"}
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStageStyle(stageName)}`}>
+                      {stageName}
                     </span>
                   </p>
                   <p><span className="font-medium">Phương thức giao:</span> {order?.shippingMethod}</p>
                   <p><span className="font-medium">Phí vận chuyển:</span> {new Intl.NumberFormat('vi-VN').format(order?.shippingFee)} VND</p>
+                  <p><span className="font-medium">Đã thanh toán online:</span> {new Intl.NumberFormat('vi-VN').format(getOnlinePaidAmount())} VND</p>
                 </div>
               </div>
 
@@ -246,7 +272,7 @@ const OrderDetail = () => {
                         {/* <span className="font-medium">Mô tả tùy chỉnh:</span> {order.customDescription || "N/A"} */}
                         {/* </p> */}
                         <p className="text-gray-600 text-center" >
-                          <span className="font-medium">Màu áo:</span> {order.shirtColor || "N/A"}
+                          {/* <span className="font-medium">Màu áo:</span> {order.shirtColor || "N/A"} */}
                         </p>
                         <p className="text-gray-600 text-center" >
                           <span className="font-medium">Số lượng:</span> {order.quantity}
@@ -260,7 +286,10 @@ const OrderDetail = () => {
                       </div>
                       <div>
                         <p className="text-sm text-gray-500">Tổng tiền</p>
-                        <p className="text-lg font-semibold text-red-600">{new Intl.NumberFormat('vi-VN').format(order?.totalPrice)} VND</p>
+                        <p className="text-lg font-semibold text-red-600">{new Intl.NumberFormat('vi-VN', {
+  style: 'currency',
+  currency: 'VND'
+}).format(Number(order.totalAmount ?? order.totalPrice ?? order.price ?? 0))}</p>
                       </div>
                     </div>
                   </div>

@@ -1,8 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { toast } from "react-toastify";
 
+// Hàm chuyển đổi key từ PascalCase sang camelCase
+function toCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(v => toCamelCase(v));
+  } else if (obj !== null && obj.constructor === Object) {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      result[camelKey] = toCamelCase(obj[key]);
+      return result;
+    }, {});
+  }
+  return obj;
+}
 
-const API_URL = "https://localhost:7163/api/Product";
+const API_URL = "https://thisaonao-001-site1.rtempurl.com/api/Product";
 // const API_URL = "https://phamdangtuc-001-site1.ntempurl.com/api/Product";
 
 // Lấy danh sách sản phẩm
@@ -16,8 +29,10 @@ export const fetchProducts = createAsyncThunk("products/fetchProducts", async (_
     console.log("API Product Response:", data);
 
     // Lọc sản phẩm chưa bị xóa (isDeleted: false)
-    const products = Array.isArray(data?.data) ? data.data : data?.data?.$values || [];
-    const filteredProducts = products.filter((product) => !product.isDeleted);
+    // API trả về cấu trúc: { Data: { $values: [...] } }
+    const products = Array.isArray(data?.Data?.$values) ? data.Data.$values : [];
+    const camelProducts = toCamelCase(products);
+    const filteredProducts = camelProducts.filter((product) => !product.isDeleted);
 
     return filteredProducts;
   } catch (error) {

@@ -44,7 +44,7 @@ const CheckoutConfirmation = () => {
     };
 
     try {
-      const response = await fetch("http://hai3004-001-site1.anytempurl.com/api/Orders", {
+      const response = await fetch("https://thisaonao-001-site1.rtempurl.com/api/Orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderPayload),

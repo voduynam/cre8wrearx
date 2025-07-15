@@ -24,7 +24,7 @@ const StaffPage = () => {
         stockInStorage: "",
         image: "",
         description: "",
-        categoryId: 1
+        categoryId: ""
     });
 
     const products = Array.isArray(items) ? items : [];
@@ -37,10 +37,17 @@ const StaffPage = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch('http://hai3004-001-site1.anytempurl.com/api/Category');
+                const response = await fetch('https://thisaonao-001-site1.rtempurl.com/api/Category');
                 const data = await response.json();
-                if (data.status === 1 && data.data.$values) {
-                    setCategories(data.data.$values);
+                console.log("===> FETCH CATEGORY RESPONSE:", data);
+                if (data.Status === 1 && data.Data && data.Data.$values) {
+                    const categories = data.Data.$values.map(cat => ({
+                        categoryId: cat.CategoryId,
+                        categoryName: cat.CategoryName,
+                        ...cat
+                    }));
+                    console.log("===> CATEGORY ARRAY (normalized):", categories);
+                    setCategories(categories);
                 }
             } catch (error) {
                 console.error('Error fetching categories:', error);
@@ -121,16 +128,31 @@ const StaffPage = () => {
                     categoryId: Number(newProduct.categoryId)
                 };
                 console.log("Adding new product with data:", newProductData);
-                const result = await dispatch(addProduct(newProductData));
-                console.log("Add result:", result);
-                if (result.error) {
+                const formData = new FormData();
+                formData.append('CategoryId', newProductData.categoryId);
+                formData.append('ProductName', newProductData.productName);
+                formData.append('Price', newProductData.price);
+                formData.append('StockInStorage', newProductData.stockInStorage);
+                formData.append('Image', newProductData.image || '');
+                formData.append('Description', newProductData.description || '');
+                // Nếu không upload file, vẫn append ImageFile rỗng:
+                formData.append('ImageFile', new Blob([]), ''); // hoặc không append cũng được
+
+                const response = await fetch('https://thisaonao-001-site1.rtempurl.com/api/Product', {
+                    method: 'POST',
+                    body: formData, // KHÔNG set Content-Type
+                });
+                const data = await response.json();
+                console.log('Kết quả:', data);
+
+                if (data.Status === 1) {
+                    toast.success("Thêm sản phẩm mới thành công!", { autoClose: 2000 });
+                    dispatch(fetchProducts());
+                } else {
                     toast.error("Thêm sản phẩm thất bại!");
-                    return;
                 }
-                toast.success("Thêm sản phẩm mới thành công!", { autoClose: 2000 });
             }
             setModalOpen(false);
-            dispatch(fetchProducts());
         } catch (error) {
             console.error("Error saving product:", error);
             toast.error("Có lỗi xảy ra khi lưu sản phẩm!");
@@ -159,7 +181,7 @@ const StaffPage = () => {
     const handleAddCategory = async () => {
         try {
             console.log("Adding new category:", newCategory);
-            const response = await fetch('https://localhost:7163/api/Category', {
+            const response = await fetch('https://thisaonao-001-site1.rtempurl.com/api/Category', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -168,13 +190,18 @@ const StaffPage = () => {
             });
             const data = await response.json();
             console.log("Category API response:", data);
-            if (data.status === 1) {
+            if (data.Status === 1) {
                 toast.success("Thêm danh mục thành công!");
-                const categoriesResponse = await fetch('https://localhost:7163/api/Category');
+                const categoriesResponse = await fetch('https://thisaonao-001-site1.rtempurl.com/api/Category');
                 const categoriesData = await categoriesResponse.json();
-                if (categoriesData.status === 1 && categoriesData.data.$values) {
-                    console.log("Updated categories list:", categoriesData.data.$values);
-                    setCategories(categoriesData.data.$values);
+                if (categoriesData.Status === 1 && categoriesData.Data && categoriesData.Data.$values) {
+                    console.log("Updated categories list:", categoriesData.Data.$values);
+                    setCategories(categoriesData.Data.$values.map(cat => ({
+                        categoryId: cat.CategoryId,
+                        categoryName: cat.CategoryName,
+                        ...cat
+                    })));
+                    console.log("Categories state after update:", categoriesData.Data.$values);
                 }
                 setCategoryModalOpen(false);
                 setNewCategory({ categoryName: "" });
@@ -245,8 +272,8 @@ const StaffPage = () => {
                                 >
                                     <option value="all">Tất cả danh mục</option>
                                     {categories.map((category) => (
-                                        <option key={category.categoryId} value={category.categoryId}>
-                                            {category.categoryName}
+                                        <option key={category.CategoryId} value={category.CategoryId}>
+                                            {category.CategoryName}
                                         </option>
                                     ))}
                                 </select>
@@ -422,14 +449,11 @@ const StaffPage = () => {
                                     }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                    {categories.map((category) => {
-                                        console.log("Rendering category option:", category);
-                                        return (
-                                            <option key={category.categoryId} value={category.categoryId}>
-                                                {category.categoryName} 
-                                            </option>
-                                        );
-                                    })}
+                                    {categories.map((category) => (
+                                        <option key={category.CategoryId} value={category.CategoryId}>
+                                            {category.CategoryName} 
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>

@@ -33,7 +33,7 @@ const PaymentCallback = () => {
           
           // Chuyển hướng sau 2 giây
           setTimeout(() => {
-            window.location.href = "https://swd-fe-nine.vercel.app/member";
+            window.location.href = "https://cre8wrearx.vercel.app/member";
           }, 2000);
         } else {
           console.log("Thanh toán thất bại, cập nhật trạng thái");
@@ -49,7 +49,7 @@ const PaymentCallback = () => {
 
           // Chuyển hướng sau 2 giây
           setTimeout(() => {
-            window.location.href = "https://swd-fe-nine.vercel.app/member";
+            window.location.href = "https://cre8wrearx.vercel.app/member";
           }, 2000);
         }
       } catch (error) {

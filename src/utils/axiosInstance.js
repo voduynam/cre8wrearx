@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://localhost:7163/api',
+  baseURL: 'https://thisaonao-001-site1.rtempurl.com/api',
 });
 
 // Thêm interceptor để tự động thêm token vào header

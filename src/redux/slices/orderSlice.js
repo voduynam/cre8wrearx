@@ -1,7 +1,22 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_BASE_URL = 'https://localhost:7163/api/Orders';
+const API_BASE_URL = 'https://thisaonao-001-site1.rtempurl.com/api/Orders';
 // const API_BASE_URL = 'https://phamdangtuc-001-site1.ntempurl.com/api/Orders';
+
+// Hàm chuyển đổi key từ PascalCase sang camelCase
+function toCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(v => toCamelCase(v));
+  } else if (obj !== null && obj.constructor === Object) {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      result[camelKey] = toCamelCase(obj[key]);
+      return result;
+    }, {});
+  }
+  return obj;
+}
+
 // Async thunk để đặt hàng
 export const placeOrder = createAsyncThunk('order/placeOrder', async (orderData, { rejectWithValue }) => {
   try {
@@ -65,7 +80,7 @@ const orderSlice = createSlice({
       })
       .addCase(placeOrder.fulfilled, (state, action) => {
         state.status = 'success';
-        state.orderDetails = action.payload;
+        state.orderDetails = toCamelCase(action.payload); // chuyển đổi key
       })
       .addCase(placeOrder.rejected, (state, action) => {
         state.status = 'failed';
@@ -78,7 +93,7 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrder.fulfilled, (state, action) => {
         state.status = 'success';
-        state.orderDetails = action.payload;
+        state.orderDetails = toCamelCase(action.payload); // chuyển đổi key
       })
       .addCase(fetchOrder.rejected, (state, action) => {
         state.status = 'failed';

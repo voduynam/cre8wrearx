@@ -7,6 +7,20 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Search, Filter, ChevronDown, ChevronUp, ShoppingCart, Eye, Edit } from 'lucide-react';
 
+// Thêm hàm chuyển đổi key
+function toCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(v => toCamelCase(v));
+  } else if (obj !== null && obj.constructor === Object) {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      result[camelKey] = toCamelCase(obj[key]);
+      return result;
+    }, {});
+  }
+  return obj;
+}
+
 const DesignSamples = () => {
   const dispatch = useDispatch();
   const [openFilter, setOpenFilter] = useState(null);
@@ -23,7 +37,7 @@ const DesignSamples = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://hai3004-001-site1.anytempurl.com/api/Category');
+        const response = await fetch('https://thisaonao-001-site1.rtempurl.com/api/Category');
         const data = await response.json();
         if (data.status === 1 && data.data.$values) {
           const categoriesData = data.data.$values;
@@ -91,16 +105,29 @@ const DesignSamples = () => {
   };
 
   // Lọc sản phẩm theo từ khóa tìm kiếm & danh mục đã chọn
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.productName.toLowerCase().includes(searchTerm.toLowerCase());
-    console.log("Product:", product.productName, "CategoryId:", product.categoryId, "Selected filters:", Array.from(selectedFilters)); // Debug log
+  const filteredProducts = products
+    .map(toCamelCase) // <-- chuyển đổi key
+    .filter((product) => {
+      // Cải thiện tìm kiếm: tìm trong tên sản phẩm, mô tả và ID
+      const searchFields = [
+        product.productName,
+        product.description,
+        product.productId?.toString()
+      ].filter(Boolean); // Loại bỏ giá trị null/undefined
+      
+      const matchesSearch = searchTerm.trim() === "" || 
+        searchFields.some(field => 
+          field.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      
+      console.log("Product:", product.productName, "CategoryId:", product.categoryId, "Selected filters:", Array.from(selectedFilters)); // Debug log
 
-    if (selectedFilters.size === 0) return matchesSearch;
+      if (selectedFilters.size === 0) return matchesSearch;
 
-    const matchesCategory = selectedFilters.has(product.categoryId);
-    console.log("Matches category:", matchesCategory); // Debug log
-    return matchesSearch && matchesCategory;
-  });
+      const matchesCategory = selectedFilters.has(product.categoryId);
+      console.log("Matches category:", matchesCategory); // Debug log
+      return matchesSearch && matchesCategory;
+    });
 
   return (
     <div className="min-h-screen bg-black">
@@ -227,7 +254,7 @@ const DesignSamples = () => {
                           src={product.image && product.image.startsWith("http") 
                             ? product.image 
                             : `https://localhost:7163/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
-                          alt={product.productName}
+                          alt={product.productName || "Sản phẩm"}
                           className="w-full h-72 object-cover transition-all duration-500 group-hover:scale-110"
                           onError={(e) => e.target.src = "/fallback-image.jpg"} 
                         />
@@ -261,7 +288,7 @@ const DesignSamples = () => {
 
                         {/* Price badge */}
                         <div className="absolute top-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                          {product.price.toLocaleString()} VND
+                          {(product.price || 0).toLocaleString()} VND
                         </div>
                       </div>
 
@@ -270,17 +297,17 @@ const DesignSamples = () => {
                           className="text-lg font-semibold text-white group-hover:text-blue-400 transition-colors duration-200 cursor-pointer line-clamp-2 mb-2"
                           onClick={() => navigate(`/product/${product.productId}`)}
                         >
-                          {product.productName}
+                          {product.productName || "Sản phẩm chưa đặt tên"}
                         </h3>
                        <h4 className="text-sm text-gray-300 group-hover:text-blue-300 transition-colors duration-200 line-clamp-2">
-  {product.description}
+  {product.description || "Chưa có mô tả"}
 </h4>
 
                        
                         
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-slate-400">
-                            Mã sản phẩm: #{product.productId.toString().slice(-6)}
+                            Mã sản phẩm: #{product.productId ? product.productId.toString().slice(-6) : "N/A"}
                           </span>
                         </div>
                       </div>
