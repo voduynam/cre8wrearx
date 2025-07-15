@@ -2,6 +2,11 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+import { useDispatch } from "react-redux";
+import { setUser } from "./redux/slices/userSlice";
+import { loadUserCart } from "./redux/slices/cartSlice";
+import { useEffect } from "react";
+
 import {
   BrowserRouter as Router,
   Route,
@@ -85,7 +90,40 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 };
 
 const AppContent = () => {
-  const location = useLocation(); // Lấy đường dẫn hiện tại
+  const location = useLocation();
+  const dispatch = useDispatch();
+
+  // ✅ Tự động xử lý token từ URL (Google Login)
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const token = query.get("token");
+
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const role =
+          payload[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ];
+        const username = payload["name"] || "GoogleUser";
+
+        // Lưu vào localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify({ role, username }));
+
+        // Cập nhật Redux
+        dispatch(setUser({ token, role, username }));
+        dispatch(loadUserCart());
+
+        // Xóa token khỏi URL và chuyển trang đúng
+        const target = role === "staff" ? "/order-tracking" : "/";
+        window.history.replaceState({}, "", target);
+      } catch (err) {
+        console.error("Google Token decode lỗi:", err);
+      }
+    }
+  }, [location.search]);
+
   const hideHeaderFooter = false;
 
   return (
