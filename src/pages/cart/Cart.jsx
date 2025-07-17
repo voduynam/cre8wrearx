@@ -252,12 +252,12 @@ const Cart = () => {
                     <span>{item.name} x {item.quantity}</span>
                     <span>{(item.price * item.quantity).toLocaleString()} VND</span>
                   </div>
-                  <div className="text-sm text-gray-600">
+                  {/* <div className="text-sm text-gray-600">
                     <p>Màu áo: {item.shirtColor || "Chưa chọn màu"}</p>
                     {item.customDescription && (
                       <p>Mô tả: {item.customDescription}</p>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               ))}
             </div>
@@ -540,12 +540,12 @@ const Cart = () => {
                     {item.image && <img src={item.image} alt={item.name} className="w-16 h-16 object-cover" />}
                     <div>
                       <p className="text-lg font-semibold">{item.name}</p>
-                      <div className="text-sm text-gray-600 mt-1">
+                      {/* <div className="text-sm text-gray-600 mt-1">
                         <p><span className="font-medium">Màu áo:</span> {item.shirtColor || "Chưa chọn màu"}</p>
                         {item.isCustomProduct && item.customDescription && (
                           <p><span className="font-medium">Mô tả:</span> {item.customDescription}</p>
                         )}
-                      </div>
+                      </div> */}
                       <p className="text-gray-600 mt-1">{(item.price * item.quantity).toLocaleString()} VND</p>
                       <div className="flex items-center mt-2">
                         <button

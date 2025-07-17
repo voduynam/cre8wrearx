@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Menu, ChevronDown } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
@@ -8,6 +8,28 @@ import logo from "../assets copy/logo.png";
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const profileRes = await fetch("https://thisaonao-001-site1.rtempurl.com/api/users/profile", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!profileRes.ok) throw new Error("Token hết hạn hoặc không hợp lệ!");
+        const profileData = await profileRes.json();
+        console.log("Profile API data:", profileData); // Thêm dòng này
+        setProfile(profileData.Data);
+      } catch (error) {
+        setProfile(null);
+        console.error(error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   // Lấy thông tin từ Redux
   const { role, isAuthenticated, username } = useSelector(
@@ -257,7 +279,7 @@ const Header = () => {
             <button className='hover:text-orange-400 text-base flex items-center'>
               {" "}
               {/* Changed from text-xl to text-base */}
-              {username || "TRANG CÁ NHÂN"} <ChevronDown className='ml-2' />
+              {profile?.FullName || profile?.fullName || username || "TRANG CÁ NHÂN"} <ChevronDown className='ml-2' />
             </button>
             <div className='absolute right-0 top-full w-48 bg-black border border-gray-700 rounded-lg hidden group-hover:block z-50'>
               {role === "member" && (
