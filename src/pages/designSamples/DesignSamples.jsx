@@ -269,13 +269,7 @@ const DesignSamples = () => {
                               <Eye className="w-4 h-4" />
                               Xem chi tiết
                             </button>
-                            <button
-                              onClick={() => navigate(`/designer?productId=${product.productId}&image=${encodeURIComponent(product.image)}&name=${encodeURIComponent(product.productName)}&price=${product.price}`)}
-                              className="flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
-                            >
-                              <Edit className="w-4 h-4" />
-                              Tùy chỉnh
-                            </button>
+                       
                             <button
                               onClick={() => handleAddToCart(product)}
                               className="flex items-center gap-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
@@ -306,9 +300,7 @@ const DesignSamples = () => {
                        
                         
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">
-                            Mã sản phẩm: #{product.productId ? product.productId.toString().slice(-6) : "N/A"}
-                          </span>
+                          
                         </div>
                       </div>
                     </div>

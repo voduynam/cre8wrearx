@@ -57,7 +57,7 @@ const Cart = () => {
       cancelButtonText: "Hủy",
     }).then((result) => {
       if (result.isConfirmed) {
-        dispatch(removeFromCart(productId));
+        dispatch(removeFromCart(String(productId))); // ép về chuỗi
         Swal.fire("Đã xóa!", "Sản phẩm đã được xóa khỏi giỏ hàng.", "success");
       }
     });
@@ -73,21 +73,7 @@ const Cart = () => {
   }, [cartItems, shippingFee]);
   
 
-  // Xử lý thay đổi số lượng
-  // const handleQuantityChange = (productId, newQuantity) => {
-  //   // if (newQuantity < 1) return;
 
-  //   // setQuantities((prev) => ({
-  //   //   ...prev,
-  //   //   [productId]: newQuantity,
-  //   // }));
-  //   setQuantities((prev) => ({
-  //     ...prev,
-  //     [productId]: Math.max(newQuantity, 10) // Giữ số lượng tối thiểu là 10
-  //   }));
-
-  //   dispatch(updateQuantity({ productId, quantity: Math.max(newQuantity, 10) }));
-  // };
 
   const handleQuantityChange = (productId, newQuantity) => {
     const updatedQuantity = Math.max(newQuantity, 1); // Đảm bảo số lượng tối thiểu là 10
@@ -163,7 +149,8 @@ const Cart = () => {
         notes: notes || "",
         quantity: customProduct.quantity,
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        fullImage: customProduct.image || "",
+        fullImage: null,
+        base64Image: customProduct.image, // Thêm dòng này
         price: customProduct.price,
         totalPrice: (customProduct.price * customProduct.quantity) + (shippingMethod === "Giao nhanh" ? 10000 : 0)
       };
@@ -385,6 +372,30 @@ const Cart = () => {
                 >
                   Tiếp tục mua sắm
                 </button>
+                <button
+                  onClick={async () => {
+                    setOrderStatus("checking_payment");
+                    try {
+                      const res = await fetch(`https://thisaonao-001-site1.rtempurl.com/Payment/SePay/payment-status?orderId=${orderStage}`);
+                      if (!res.ok) throw new Error("Không thể kiểm tra trạng thái thanh toán");
+                      const data = await res.json();
+                      if (data.status === "success" || data.status === "paid") {
+                        alert("Thanh toán thành công!");
+                      } else if (data.status === "pending") {
+                        alert("Thanh toán đang chờ xử lý.");
+                      } else {
+                        alert("Thanh toán thất bại hoặc chưa thanh toán.");
+                      }
+                    } catch (e) {
+                      alert("Lỗi khi kiểm tra thanh toán: " + e.message);
+                    } finally {
+                      setOrderStatus("success");
+                    }
+                  }}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors mt-2 "
+                >
+                  Kiểm tra thanh toán
+                </button>
               </div>
             </div>
           )}
@@ -469,8 +480,34 @@ const Cart = () => {
             <button
               onClick={() => setQrInfo(null)}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={isLoading}
             >
               Đóng
+            </button>
+            <button
+              onClick={async () => {
+                setIsLoading(true);
+                try {
+                  const res = await fetch(`https://thisaonao-001-site1.rtempurl.com/Payment/SePay/payment-status?orderId=${orderStage}`);
+                  if (!res.ok) throw new Error("Không thể kiểm tra trạng thái thanh toán");
+                  const data = await res.json();
+                  if (data.status === "success" || data.status === "paid") {
+                    alert("Thanh toán thành công!");
+                  } else if (data.status === "pending") {
+                    alert("Thanh toán đang chờ xử lý.");
+                  } else {
+                    alert("Thanh toán thất bại hoặc chưa thanh toán.");
+                  }
+                } catch (e) {
+                  alert("Lỗi khi kiểm tra thanh toán: " + e.message);
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              disabled={isLoading}
+            >
+              {isLoading ? "Đang kiểm tra..." : "Kiểm tra thanh toán"}
             </button>
           </div>
         </div>
@@ -478,6 +515,14 @@ const Cart = () => {
       <OrderStatusDisplay />
       <ConfirmOrderModal />
       <h2 className="text-3xl font-bold mb-6 text-center">🛒 Giỏ hàng của bạn</h2>
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={() => navigate('/member')}
+          className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+        >
+          Kiểm tra trạng thái đơn hàng
+        </button>
+      </div>
       {cartItems.length === 0 ? (
         <div className="text-center">
           <p className="text-gray-600 mb-4 text-lg">Giỏ hàng của bạn đang trống.</p>
@@ -526,7 +571,7 @@ const Cart = () => {
                       </div>
                     </div>
                   </div>
-                  <button onClick={() => handleRemoveItem(item.productId)}>
+                  <button onClick={() => handleRemoveItem(String(item.productId))}>
                     <Trash size={20} className="text-red-500 cursor-pointer" />
                   </button>
                 </li>

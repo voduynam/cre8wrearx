@@ -61,9 +61,11 @@ const cartSlice = createSlice({
         return;
       }
 
-      state.items = state.items.filter((item) => 
-        item.productId.toString() !== action.payload.toString()
-      );
+      // Loại bỏ luôn các item có productId null/undefined hoặc trùng với action.payload
+      state.items = state.items.filter((item) => {
+        if (item.productId == null) return false; // xoá luôn nếu productId null/undefined
+        return item.productId.toString() !== action.payload.toString();
+      });
 
       console.log("Xoá sản phẩm có ID:", action.payload);
       saveCartToStorage(state.items);

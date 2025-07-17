@@ -150,13 +150,6 @@ const DesignerPage = () => {
     img.src = base64;
   };
 
-  // Handle drag decoration
-  // const handleDecorationDragEnd = (e) => {
-  //   if (!decoration) return;
-  //   const { x, y } = clampImagePosition(e.target.x(), e.target.y(), decoration.width, decoration.height);
-  //   setDecoration(prev => prev ? { ...prev, x, y } : null);
-  // };
-
   // Remove decoration
   const removeDecoration = () => setDecoration(null);
 
@@ -210,7 +203,7 @@ const DesignerPage = () => {
       deliveryDate
     };
 
-    console.log('Payload gửi API:', payload);
+    console.log('Payload gửi APdddddddddddddddI:', payload);
 
     const res = await fetch('https://thisaonao-001-site1.rtempurl.com/api/customizeproducts/create-with-order', {
       method: 'POST',
@@ -290,7 +283,11 @@ const DesignerPage = () => {
       toast.error('Không tìm thấy sản phẩm!');
       return;
     }
-    dispatch(addToCartAction(selectedProduct));
+    dispatch(addToCartAction({
+      ...selectedProduct,
+      price: selectedProduct.price, // Lấy đúng trường từ API
+      // các trường khác...
+    }));
     toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
       position: "top-right",
       autoClose: 1000,
@@ -311,7 +308,7 @@ const DesignerPage = () => {
       // CustomizeProductId: null, // Nếu có
       productId: selectedProductId,
       productName: selectedProduct?.productName || 'Thiết kế của bạn',
-      price: selectedProduct?.price || 0, // hoặc giá custom
+      price: selectedProduct?.price || selectedProduct?.Price || 0, // Lấy giá đúng
       image: dataUrl, // Ảnh thiết kế
       isCustomProduct: true,
       customDescription: description,
@@ -445,92 +442,12 @@ const DesignerPage = () => {
               )}
               <p className="text-sm text-gray-500 mt-1">Chỉ hỗ trợ PNG, JPG, GIF (dưới 5MB)</p>
             </div>
-            <div className="space-y-3">
-              <h3 className="font-semibold mb-2">Thông tin người nhận</h3>
-              <input
-                type="text"
-                value={recipientName}
-                onChange={e => setRecipientName(e.target.value)}
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Tên người nhận"
-              />
-              <input
-                type="text"
-                value={deliveryAddress}
-                onChange={e => setDeliveryAddress(e.target.value)}
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Địa chỉ giao hàng"
-              />
-              <input
-                type="number"
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Số điện thoại người nhận"
-                maxLength={10}
-                minLength={10}
-              />
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                className="w-full p-2 border rounded mb-2"
-                placeholder="Nhập số lượng size và mô tả tùy ý"
-                rows={2}
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <h3 className="font-semibold mb-2">Số lượng:</h3>
-              <button
-                type="button"
-                className="px-3 py-1 bg-gray-200 rounded text-lg"
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-              >-</button>
-              <input
-                type="number"
-                min={1}
-                value={quantity}
-                onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
-                className="w-16 p-2 border rounded text-center"
-              />
-              <button
-                type="button"
-                className="px-3 py-1 bg-gray-200 rounded text-lg"
-                onClick={() => setQuantity(q => q + 1)}
-              >+</button>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-2">Phương thức vận chuyển</h3>
-              <select
-                className="w-full p-2 border rounded mb-2"
-                value={shippingMethod}
-                onChange={e => setShippingMethod(e.target.value)}
-              >
-                <option value="Tiêu chuẩn">Tiêu chuẩn (20,000đ)</option>
-                <option value="Nhanh">Nhanh (30,000đ)</option>
-                <option value="Hỏa tốc">Hỏa tốc (50,000đ)</option>
-              </select>
-              <div className="text-gray-700 mb-2">Phí vận chuyển: <b>{shippingFee.toLocaleString()}đ</b></div>
-            </div>
-            {/* <div>
-              <h3 className="font-semibold mb-2">Ngày giao dự kiến</h3>
-              <input
-                type="datetime-local"
-                value={deliveryDate}
-                readOnly
-                className="w-full p-2 border rounded bg-gray-100 text-gray-700"
-              />
-            </div> */}
+            {/* ĐÃ XÓA: Thông tin người nhận, địa chỉ, số điện thoại, mô tả, số lượng, phương thức vận chuyển, ngày giao dự kiến */}
             <button
               onClick={handleAddCurrentDesignToCart}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition mb-2"
             >
               Thêm vào giỏ hàng
-            </button>
-            <button
-              onClick={handleOrder}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition"
-            >
-              Đặt hàng
             </button>
           </div>
         </div>

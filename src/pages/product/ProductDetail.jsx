@@ -7,6 +7,24 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axiosInstance from "../../utils/axiosInstance";
 
+function toCamelCase(obj) {
+  if (Array.isArray(obj)) {
+    return obj.map(v => toCamelCase(v));
+  } else if (obj !== null && typeof obj === 'object') {
+    return Object.keys(obj).reduce((result, key) => {
+      // Giữ nguyên các key đặc biệt như $id, $ref
+      if (key.startsWith('$')) {
+        result[key] = obj[key];
+      } else {
+        const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+        result[camelKey] = toCamelCase(obj[key]);
+      }
+      return result;
+    }, {});
+  }
+  return obj;
+}
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -40,28 +58,33 @@ const ProductDetail = () => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Raw API response:", data);
 
-        if (data.status === 1 && data.data) {
-          setProduct(data.data);
-
-          // Fetch category information if categoryId exists
-          if (data.data.categoryId) {
-            try {
-              const categoryResponse = await fetch(`https://thisaonao-001-site1.rtempurl.com/api/Category/${data.data.categoryId}`);
-              if (!categoryResponse.ok) {
-                throw new Error(`HTTP error! status: ${categoryResponse.status}`);
-              }
-              const categoryData = await categoryResponse.json();
-              if (categoryData.status === 1 && categoryData.data) {
-                setCategory(categoryData.data);
-              }
-            } catch (categoryErr) {
-              console.error("Error fetching category:", categoryErr);
-              // Don't set error state for category fetch failure
-            }
-          }
+        // Check different possible response structures
+        let productData = null;
+        
+        if (data.status === 1 && data.Data) {
+          // Case 1: Response has status and Data field
+          productData = data.Data;
+        } else if (data.Status === 1 && data.Data) {
+          // Case 2: Response has Status (capital S) and Data field
+          productData = data.Data;
+        } else if (data.ProductId || data.productId) {
+          // Case 3: Response is the product data directly
+          productData = data;
+        } else if (data.data && (data.data.ProductId || data.data.productId)) {
+          // Case 4: Response has data field (lowercase)
+          productData = data.data;
         } else {
-          throw new Error(data.message || "Không tìm thấy thông tin sản phẩm");
+          throw new Error("Không tìm thấy thông tin sản phẩm trong response");
+        }
+
+        if (productData) {
+          const convertedProduct = toCamelCase(productData);
+          console.log("Product after conversion:", convertedProduct);
+          setProduct(convertedProduct);
+        } else {
+          throw new Error("Không tìm thấy thông tin sản phẩm");
         }
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -79,19 +102,12 @@ const ProductDetail = () => {
     }
   }, [id]);
 
-
-
   const handleAddToCart = () => {
-    if (!selectedColor) {
-      toast.error("Vui lòng chọn màu áo!");
-      return;
-    }
+    // Bỏ kiểm tra bắt buộc chọn màu áo
     if (cartItems.length > 0) {
       toast.error("⚠️ Bạn chỉ có thể thêm 1 sản phẩm vào giỏ hàng!", { autoClose: 2000 });
       return;
     }
-    // dispatch(addToCartAction(product));
-    // toast.success("✅ Đã thêm sản phẩm vào giỏ hàng!", { autoClose: 1000 });
 
     if (product) {
       try {
@@ -101,7 +117,7 @@ const ProductDetail = () => {
           name: product.productName,
           isCustomProduct: true,
           customDescription: customDescription,
-          shirtColor: selectedColor,
+          shirtColor: selectedColor, // vẫn truyền nếu có chọn
           description: product.productName,
           image: product.image,
           price: product.price,
@@ -111,7 +127,6 @@ const ProductDetail = () => {
         dispatch(addToCartAction(productWithDetails));
         toast.success('Đã thêm sản phẩm vào giỏ hàng!');
 
-        // Chuyển hướng sang trang giỏ hàng sau khi thêm thành công
         setTimeout(() => {
           navigate("/cart");
         }, 1200);
@@ -121,7 +136,6 @@ const ProductDetail = () => {
       }
     }
   };
-
 
   if (loading) {
     return (
@@ -154,14 +168,21 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-gray-600 text-lg">Không tìm thấy thông tin sản phẩm</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-white">
+        <div className="text-center max-w-md mx-auto p-8 bg-white rounded-2xl shadow-xl">
+          <div className="text-6xl mb-4">🔍</div>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            Không tìm thấy sản phẩm
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
+          </p>
           <button
-            onClick={() => navigate('/design/mau-co-san')}
-            className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            onClick={() => navigate('/design-samples')}
+            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
-            Quay lại
+            <FaArrowLeft className="inline mr-2" />
+            Quay lại trang sản phẩm
           </button>
         </div>
       </div>
@@ -169,94 +190,126 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50">
       <ToastContainer />
-      <div className="max-w-7xl mx-auto">
-        <button
-          onClick={() => navigate('/design-samples')}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-6"
-        >
-          <FaArrowLeft className="mr-2" />
-          Quay lại
-        </button>
+      
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-orange-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <button
+              onClick={() => navigate('/design-samples')}
+              className="flex items-center text-gray-600 hover:text-orange-600 transition-colors font-medium"
+            >
+              <FaArrowLeft className="mr-2" />
+              Quay lại
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Chi tiết sản phẩm</h1>
+            <div className="w-20"></div>
+          </div>
+        </div>
+      </div>
 
-        <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6">
-            {/* Hình ảnh sản phẩm */}
-            <div className="relative">
-              <img
-                src={product.image && product.image.startsWith("http")
-                  ? product.image
-                  : `http://hai3004-001-site1.anytempurl.com/uploads/${product.image ? product.image.split("\\").pop() : "fallback-image.jpg"}`}
-                alt={product.productName}
-                className="w-full h-[500px] object-contain rounded-lg"
-                onError={(e) => {
-                  console.error("Error loading image:", e);
-                  e.target.src = "/fallback-image.jpg";
-                }}
-              />
+      {/* Product Details */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-orange-100">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+            
+            {/* Product Image */}
+            <div className="relative overflow-hidden bg-gradient-to-br from-orange-50 to-white">
+              <div className="aspect-w-1 aspect-h-1">
+                <img
+                  src={product.image || "/api/placeholder/400/400"}
+                  alt={product.productName}
+                  className="w-full h-full object-cover object-center transition-transform duration-500 hover:scale-105"
+                  onError={(e) => {
+                    console.error("Error loading image:", e);
+                    e.target.src = "/fallback-image.jpg";
+                  }}
+                />
+              </div>
+              {/* Price Badge */}
+              <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2 rounded-full font-bold shadow-lg">
+                {product.price?.toLocaleString('vi-VN')}₫
+              </div>
             </div>
 
-            {/* Thông tin sản phẩm */}
-            <div className="space-y-6">
-              <h1 className="text-3xl font-bold text-gray-900">{product.productName}</h1>
-              <h2 className="text-xl text-left text-gray-900 ">{product.description}</h2>
-              <div className="flex items-center space-x-2 text-2xl font-semibold text-indigo-600">
-                <FaTag className="text-xl" />
-                <span>{product.price.toLocaleString('vi-VN')} VND</span>
+            {/* Product Info */}
+            <div className="p-8">
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                  {product.productName}
+                </h2>
+                
+                <div className="flex items-center mb-6">
+                  <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2 rounded-lg font-bold text-xl">
+                    {product.price?.toLocaleString('vi-VN')}₫
+                  </div>
+                </div>
+
+                <div className="space-y-4 mb-8">
+                  <div className="flex items-center text-gray-600">
+                    <FaBox className="mr-3 text-orange-500" />
+                    <span className="font-medium">Còn lại: {product.stockInStorage} sản phẩm</span>
+                  </div>
+                  <div className="flex items-start text-gray-600">
+                    <FaInfoCircle className="mr-3 mt-1 text-orange-500 flex-shrink-0" />
+                    <span className="leading-relaxed">{product.description}</span>
+                  </div>
+                </div>
               </div>
-              {/* 
-              <div className="flex items-center space-x-2 text-gray-600">
-                <FaBox className="text-xl" />
-                <span>Còn lại: {product.stockInStorage} sản phẩm</span>
-              </div> */}
 
-              {category && (
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <FaInfoCircle className="text-xl" />
-                  <span>Danh mục: {category.categoryName}</span>
+         
+
+              {/* Custom Description */}
+              <div className="mb-8">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                  Mô tả tùy chỉnh (tùy chọn)
+                </label>
+                <textarea
+                  value={customDescription}
+                  onChange={(e) => setCustomDescription(e.target.value)}
+                  placeholder="Nhập mô tả đặc biệt cho sản phẩm của bạn..."
+                  rows={4}
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 resize-none transition-all duration-300"
+                />
+              </div>
+
+              {/* Add to Cart Button */}
+              <button
+                onClick={handleAddToCart}
+                disabled={cartItems.length > 0}
+                className={`w-full py-4 px-6 rounded-xl font-bold text-lg flex items-center justify-center transition-all duration-300 ${
+                  cartItems.length > 0
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transform hover:-translate-y-1'
+                }`}
+              >
+                <FaShoppingCart className="mr-3" />
+                {cartItems.length > 0 ? 'Giỏ hàng đã có sản phẩm' : 'Thêm vào giỏ hàng'}
+              </button>
+
+              {/* Product Features */}
+              <div className="mt-8 pt-6 border-t border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Đặc điểm sản phẩm</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center text-gray-600">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                    <span>Chất liệu cao cấp</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                    <span>Thiết kế hiện đại</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                    <span>Dễ dàng giặt sạch</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-3"></div>
+                    <span>Phù hợp mọi lứa tuổi</span>
+                  </div>
                 </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Chọn màu áo
-                  </label>
-                  <select
-                    value={selectedColor}
-                    onChange={(e) => setSelectedColor(e.target.value)}
-                    className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">-- Chọn màu --</option>
-                    {shirtColors.map((color) => (
-                      <option key={color} value={color}>
-                        {color}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mô tả tùy chỉnh (nếu cần)
-                  </label>
-                  <textarea
-                    value={customDescription}
-                    onChange={(e) => setCustomDescription(e.target.value)}
-                    className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows="4"
-                    placeholder="Nhập mô tả tùy chỉnh cho sản phẩm..."
-                  />
-                </div>
-
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Thêm vào giỏ hàng
-                </button>
               </div>
             </div>
           </div>
