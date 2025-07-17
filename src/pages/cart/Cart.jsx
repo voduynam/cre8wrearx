@@ -29,9 +29,11 @@ const Cart = () => {
       (acc, item) => ({ ...acc, [item.productId]: Math.max(item.quantity, 1) }),
       {}
     )
+    
+    
   );
   
-
+  console.log("lllllll",cartItems);
   const [recipientName, setRecipientName] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [shippingMethod, setShippingMethod] = useState("Giao thường");
@@ -252,12 +254,12 @@ const Cart = () => {
                     <span>{item.name} x {item.quantity}</span>
                     <span>{(item.price * item.quantity).toLocaleString()} VND</span>
                   </div>
-                  {/* <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600">
                     <p>Màu áo: {item.shirtColor || "Chưa chọn màu"}</p>
                     {item.customDescription && (
                       <p>Mô tả: {item.customDescription}</p>
                     )}
-                  </div> */}
+                  </div>
                 </div>
               ))}
             </div>
@@ -539,7 +541,7 @@ const Cart = () => {
                   <div className="flex items-center gap-4">
                     {item.image && <img src={item.image} alt={item.name} className="w-16 h-16 object-cover" />}
                     <div>
-                      <p className="text-lg font-semibold">{item.name}</p>
+                      <p className="text-lg font-semibold">{item.productName}</p>
                       {/* <div className="text-sm text-gray-600 mt-1">
                         <p><span className="font-medium">Màu áo:</span> {item.shirtColor || "Chưa chọn màu"}</p>
                         {item.isCustomProduct && item.customDescription && (
