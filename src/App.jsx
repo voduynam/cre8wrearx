@@ -51,7 +51,7 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import PaymentCallback from "./pages/payment/PaymentCallback";
 import CheckPaymentSuccess from "./pages/checkout/CheckPaymentSucces";
 import CheckPaymentFailed from "./pages/checkout/CheckPaymentFaild";
-import AdminDashboard from "./pages/admin/AdminDashBoard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLayout from "./components/admin/AdminLayout";
 import UserManagement from "./pages/admin/UserManagement";
 
