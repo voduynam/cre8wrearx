@@ -333,7 +333,7 @@ const AppContent = () => {
           <Route
             path='/order-detail/:orderId'
             element={
-              <ProtectedRoute allowedRoles={[2]}>
+              <ProtectedRoute allowedRoles={[2,3]}>
                 <OrderDetail />
               </ProtectedRoute>
             }

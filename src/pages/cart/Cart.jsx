@@ -45,6 +45,16 @@ const Cart = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [qrInfo, setQrInfo] = useState(null);
+  const [sizes, setSizes] = useState(
+    cartItems.reduce(
+      (acc, item) => ({ ...acc, [item.productId]: item.size || "" }),
+      {}
+    )
+  );
+
+  // Thêm state cho modal size
+  const [showSizeModal, setShowSizeModal] = useState(false);
+  const [paymentCheckResult, setPaymentCheckResult] = useState(null); // null | 'success' | 'pending' | 'fail'
 
   //Hỏi trước khi xoá sản phẩm
   const handleRemoveItem = (productId) => {
@@ -92,6 +102,13 @@ const Cart = () => {
     }));
 };
 
+  const handleSizeChange = (productId, newSize) => {
+    setSizes((prev) => ({
+      ...prev,
+      [productId]: newSize
+    }));
+  };
+
   
   // Xử lý thanh toán VNPAY
   const handleVNPayPayment = async (orderId) => {
@@ -136,53 +153,48 @@ const Cart = () => {
       const userId = tokenPayload.User_Id;
 
       // Lấy sản phẩm từ giỏ hàng
-      const customProduct = cartItems[0];
-      
+      const product = cartItems[0];
+      const size = sizes[product.productId] || "";
+      // Dùng chung API cho cả 2 loại sản phẩm
       const orderData = {
-        productId: customProduct.productId,
+        productId: product.productId,
         userId: Number(userId),
-        shirtColor: customProduct.shirtColor || "N/A",
-        description: customProduct.customDescription || "",
-        customDescription: customProduct.customDescription || "",
+        shirtColor: size || product.shirtColor || "N/A",
+        description: product.customDescription || product.description || "",
+        customDescription: product.customDescription || "",
         recipientName: recipientName,
         deliveryAddress: deliveryAddress,
         shippingMethod: shippingMethod,
         shippingFee: shippingMethod === "Giao nhanh" ? 10000 : 0,
         notes: notes || "",
-        quantity: customProduct.quantity,
+        quantity: product.quantity,
         deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         fullImage: null,
-        base64Image: customProduct.image, // Thêm dòng này
-        price: customProduct.price,
-        totalPrice: (customProduct.price * customProduct.quantity) + (shippingMethod === "Giao nhanh" ? 10000 : 0)
+        base64Image: product.base64Image || product.image || null,
+        price: product.price,
+        totalPrice: (product.price * product.quantity) + (shippingMethod === "Giao nhanh" ? 10000 : 0)
       };
-
-      console.log("Sending order data:", orderData);
+      console.log('[ORDER] Sending orderData:', orderData);
       const response = await axiosInstance.post("/customizeproducts/create-with-order", orderData);
-      
+      console.log('[ORDER] API response:', response.data);
       const data = response.data;
-      console.log("Order API response:", data);
-
       const orderId = data.orderId || data.OrderId || data.id;
       if (!orderId) {
         throw new Error("Không nhận được mã đơn hàng");
       }
-
       setOrderStage(orderId);
-        
       if (paymentMethod === "online") {
         await handleVNPayPayment(orderId);
       } else {
         dispatch(clearCart());
         setShowSuccessMessage(true);
         setOrderStatus("success");
-        
         setTimeout(() => {
           navigate(`/order-detail/${orderId}`);
         }, 3000);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error('[ORDER] Error:', error);
       setOrderStatus("error");
       toast.error("Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!");
     } finally {
@@ -256,6 +268,7 @@ const Cart = () => {
                   </div>
                   <div className="text-sm text-gray-600">
                     <p>Màu áo: {item.shirtColor || "Chưa chọn màu"}</p>
+                    <p>Size: {sizes[item.productId] || "Chưa chọn size"}</p>
                     {item.customDescription && (
                       <p>Mô tả: {item.customDescription}</p>
                     )}
@@ -467,9 +480,32 @@ const Cart = () => {
     );
   };
 
+  // Thêm component modal size
+  const SizeModal = () => (
+    showSizeModal ? (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white p-6 rounded-lg shadow-xl max-w-3xl w-full mx-4 flex flex-col  items-center">
+          <h3 className="text-xl font-bold mb-4">Bảng size áo</h3>
+          <img
+            src={"/src/assets copy/xxxxxxx.png"}
+            alt="Bảng size áo"
+            className="max-w-xl w-full border rounded shadow mb-4"
+          />
+          <button
+            onClick={() => setShowSizeModal(false)}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    ) : null
+  );
+
   return (
     <div className="max-w-5xl mx-auto py-10 px-6">
       <ToastContainer />
+      <SizeModal />
       <SuccessMessage />
       {qrInfo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -489,19 +525,20 @@ const Cart = () => {
             <button
               onClick={async () => {
                 setIsLoading(true);
+                setPaymentCheckResult(null);
                 try {
                   const res = await fetch(`https://thisaonao-001-site1.rtempurl.com/Payment/SePay/payment-status?orderId=${orderStage}`);
                   if (!res.ok) throw new Error("Không thể kiểm tra trạng thái thanh toán");
                   const data = await res.json();
-                  if (data.status === "success" || data.status === "paid") {
-                    alert("Thanh toán thành công!");
-                  } else if (data.status === "pending") {
-                    alert("Thanh toán đang chờ xử lý.");
+                  if (data.Status === "Success" || data.status === "paid") {
+                    setPaymentCheckResult("Success");
+                  } else if (data.Status === "pending") {
+                    setPaymentCheckResult("pending");
                   } else {
-                    alert("Thanh toán thất bại hoặc chưa thanh toán.");
+                    setPaymentCheckResult("fail");
                   }
                 } catch (e) {
-                  alert("Lỗi khi kiểm tra thanh toán: " + e.message);
+                  setPaymentCheckResult("fail");
                 } finally {
                   setIsLoading(false);
                 }
@@ -511,6 +548,43 @@ const Cart = () => {
             >
               {isLoading ? "Đang kiểm tra..." : "Kiểm tra thanh toán"}
             </button>
+            {/* Popup kết quả kiểm tra thanh toán */}
+            {paymentCheckResult && (
+              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                <div className="bg-white p-6 rounded-lg shadow-xl max-w-xs w-full mx-4 text-center">
+                  {(paymentCheckResult === "success" || paymentCheckResult === "Success") && (
+                    <>
+                      <div className="text-green-600 text-3xl mb-2">✔️</div>
+                      <div className="font-bold text-lg mb-2">Thanh toán thành công!</div>
+                    </>
+                  )}
+                  {paymentCheckResult === "pending" && (
+                    <>
+                      <div className="text-yellow-500 text-3xl mb-2">⏳</div>
+                      <div className="font-bold text-lg mb-2">Thanh toán đang chờ xử lý.</div>
+                    </>
+                  )}
+                  {paymentCheckResult === "fail" && (
+                    <>
+                      <div className="text-red-600 text-3xl mb-2">❌</div>
+                      <div className="font-bold text-lg mb-2">Thanh toán thất bại hoặc chưa thanh toán.</div>
+                    </>
+                  )}
+                  <button
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onClick={() => {
+                      if (paymentCheckResult === "Success") {
+                        setQrInfo(null); // Đóng luôn modal QR nếu thành công
+                        dispatch(clearCart()); // Xóa giỏ hàng
+                      }
+                      setPaymentCheckResult(null); // Đóng popup kết quả
+                    }}
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -571,6 +645,24 @@ const Cart = () => {
                           ➕
                         </button>
                       </div>
+                      <div className="flex items-center mt-2">
+                        <input
+                          type="text"
+                          placeholder="Nhập size (VD: M, L, XL, 38, 40...)"
+                          value={sizes[item.productId] || ""}
+                          onChange={(e) => handleSizeChange(item.productId, e.target.value)}
+                          className="w-32 border rounded px-2 py-1 text-sm mr-2"
+                        />
+                        <span className="text-gray-500 text-xs">Size</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowSizeModal(true)}
+                          className="ml-2 px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-xs border border-gray-300"
+                          title="Xem bảng size"
+                        >
+                          Xem bảng size
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <button onClick={() => handleRemoveItem(String(item.productId))}>
@@ -583,6 +675,15 @@ const Cart = () => {
               <p className="text-xl font-bold">Tổng cộng: {totalPrice.toLocaleString()} VND</p>
             </div>
           </div>
+
+          {/* Ảnh size áo */}
+          {/* <div className="flex justify-center my-6">
+            <img
+              src={"/src/assets copy/xxxxxxx.png"}
+              alt="Bảng size áo"
+              className="max-w-xs w-full border rounded shadow"
+            />
+          </div> */}
 
           <div className="bg-white shadow-lg rounded-lg p-6 mt-6">
             <h3 className="text-xl font-bold mb-4">Thông tin giao hàng</h3>

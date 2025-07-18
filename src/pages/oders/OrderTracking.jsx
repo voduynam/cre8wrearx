@@ -77,7 +77,7 @@ const OrderTracking = () => {
           const customizeProduct = customizeProducts.find(
             cp => cp.customizeProductId === order.customizeProductId
           );
-
+          // Không làm mất OrderStages
           return {
             ...order,
             customizeProduct: customizeProduct || {
@@ -95,7 +95,7 @@ const OrderTracking = () => {
         const sortedOrders = enrichedOrders.sort((a, b) =>
           b.orderId - a.orderId
         );
-
+    
         // Chuyển đổi key sang camelCase trước khi setOrders
         const camelOrders = toCamelCase(sortedOrders);
         setOrders(camelOrders);
@@ -117,6 +117,7 @@ const OrderTracking = () => {
       const response = await axiosInstance.get("/order-stages");
       if (response.data?.data?.$values) {
         setOrderStages(response.data.data.$values);
+      
       }
     } catch (err) {
       console.error("❌ Lỗi khi tải trạng thái đơn hàng:", err);
@@ -134,21 +135,25 @@ const OrderTracking = () => {
     { value: 3, label: "Hoàn thành" }
   ];
 
-  const getOrderStage = (orderId) => {
-    const stages = orderStages.filter(stage => stage.orderId === orderId);
-    if (stages.length === 0) return "Chờ xử lý";
-
-    // Nếu có stage "Đã thanh toán" thì ưu tiên trả về
-    if (stages.some(stage => stage.orderStageName === "Đã thanh toán" || stage.orderStageName === "Purchased")) {
-      return "Đã thanh toán";
+  // Sửa lại hàm lấy trạng thái hiện tại cho đúng chuẩn:
+  const getOrderStage = (order) => {
+    // Ưu tiên lấy từ OrderStages.$values (PascalCase)
+    let stages = [];
+    if (order.OrderStages && Array.isArray(order.OrderStages.$values)) {
+      stages = order.OrderStages.$values;
+      // Log từng stage
+      stages.forEach((stage, idx) => {
+        console.log('OrderId:', order.orderId || order.OrderId, 'Stage', idx, 'OrderStageName:', stage.OrderStageName, 'UpdatedDate:', stage.UpdatedDate);
+      });
     }
-
-    // Lấy stage mới nhất (trừ "Đã thanh toán", "Chưa thanh toán")
-    const latestStage = stages
-      .filter(stage => !["Đã thanh toán", "Chưa thanh toán"].includes(stage.orderStageName))
-      .sort((a, b) => new Date(b.updatedDate) - new Date(a.updatedDate))[0];
-
-    return latestStage ? latestStage.orderStageName : "Chờ xử lý";
+    // Nếu không có, fallback sang orderStages (camelCase)
+    else if (order.orderStages && Array.isArray(order.orderStages)) {
+      stages = order.orderStages;
+    }
+    if (!Array.isArray(stages) || stages.length === 0) return "Chờ xử lý";
+    // Sắp xếp giảm dần theo UpdatedDate
+    const sortedStages = [...stages].sort((a, b) => new Date(b.UpdatedDate || b.updatedDate) - new Date(a.UpdatedDate || a.updatedDate));
+    return sortedStages[0].OrderStageName || sortedStages[0].orderStageName || "Chưa có trạng thái";
   };
 
   // Sửa lại hàm kiểm tra trạng thái Purchased
@@ -216,6 +221,7 @@ const OrderTracking = () => {
       }
 
       await fetchOrderStages();
+      await fetchOrders(); // Thêm dòng này nếu cần
 
       setSelectedStatus(prev => {
         const newStatus = { ...prev };
@@ -301,8 +307,11 @@ const OrderTracking = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {currentOrders.map((order) => (
-                      <tr key={order.orderId} className="hover:bg-gray-50 transition-colors">
+                    {currentOrders.map((order) => {
+                      // Debug log trạng thái stages
+                      console.log('OrderId:', order.orderId || order.OrderId, 'OrderStages:', order.OrderStages, 'OrderStages.$values:', order.OrderStages?.$values);
+                      return (
+                        <tr key={order.orderId} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.orderId}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.orderDate)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.recipientName}</td>
@@ -321,12 +330,16 @@ const OrderTracking = () => {
 
                         {/* <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStageStyle(getOrderStage(order.orderId))}`}>
-                            {getOrderStage(order.orderId) || "Chưa có trạng thái"}
+                            {getOrderStage(order.orderId) || "Chờ xử lý"}
                           </span>
                         </td> */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            {getOrderStage(order.orderId) === "Hoàn thành" ? (
+                            {/* Hiển thị trạng thái hiện tại */}
+                            {/* <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStageStyle(getOrderStage(order))}`}>
+                              {getOrderStage(order) || "Chờ xử lý"}
+                            </span> */}
+                            {getOrderStage(order) === "Hoàn thành" ? (
                               <span className="text-gray-500 text-sm italic">Đã hoàn thành</span>
                             ) : isPurchased(order.orderId) ? (
                               <span className="text-green-500 text-sm italic">Đã thanh toán</span>
@@ -340,10 +353,6 @@ const OrderTracking = () => {
                                 >
                                   <option value="">Chọn trạng thái</option>
                                   {getOrderStatusOptions()
-                                    //  .filter(option => {
-                                    //   const currentStage = Number(getOrderStage(order.orderId));
-                                    //   return !isNaN(currentStage) && option.value >= currentStage;
-                                    // })
                                     .map(option => (
                                       <option key={option.value} value={option.value}>
                                         {option.label}
@@ -417,7 +426,8 @@ const OrderTracking = () => {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                   </tbody>
                 </table>
               </div>

@@ -510,6 +510,13 @@ const Login = () => {
               disabled={loading}>
               {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
+            <button
+              type='button'
+              className='w-full mt-2 bg-gray-200 text-[#915621] py-2 rounded hover:bg-gray-300 transition font-semibold'
+              onClick={() => navigate('/register')}
+            >
+              Đăng ký
+            </button>
           </form>
 
           <div className='mt-4 text-sm'>

@@ -77,9 +77,27 @@ const DesignSamples = () => {
     });
   };
 
-  const handleAddToCart = (product) => {
+  // Hàm chuyển ảnh link sang base64
+  const getBase64FromUrl = async (url) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const handleAddToCart = async (product) => {
     try {
-      dispatch(addToCartAction(product));
+      let base64Image = null;
+      if (product.image && !product.image.startsWith('data:')) {
+        base64Image = await getBase64FromUrl(product.image);
+      } else if (product.image) {
+        base64Image = product.image;
+      }
+      dispatch(addToCartAction({ ...product, isCustomProduct: false, base64Image }));
       toast.success('Đã thêm sản phẩm vào giỏ hàng!', {
         position: "top-right",
         autoClose: 1000,
