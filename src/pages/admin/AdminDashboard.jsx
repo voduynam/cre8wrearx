@@ -31,20 +31,26 @@ const AdminDashboard = () => {
         const total = totalRevenueRes.data?.revenue || 0;
         setTotalRevenue(total);
 
-        // Biểu đồ doanh thu
-        const labels = monthlyRevenueRes.data?.labels?.$values || [];
+        // ✅ Xử lý dữ liệu $values của biểu đồ doanh thu
+        const labels =
+          monthlyRevenueRes.data?.Labels?.$values ||
+          monthlyRevenueRes.data?.labels?.$values ||
+          [];
+
         const values =
-          monthlyRevenueRes.data?.datasets?.$values?.[0]?.data?.$values || [];
+          monthlyRevenueRes.data?.Datasets?.$values?.[0]?.Data?.$values ||
+          monthlyRevenueRes.data?.datasets?.$values?.[0]?.data?.$values ||
+          [];
+
         const chartData = labels.map((label, idx) => ({
           month: label,
           revenue: values[idx] || 0,
         }));
         setRevenueData(chartData);
-        console.log(":::::", chartData)
+
         // Sản phẩm được đặt nhiều
         const products = topProductsRes.data?.$values || [];
         setTopProducts(products);
-        console.log("Ffffffff",products)
 
         // Tổng đơn hàng
         const orders = ordersRes.data?.$values || [];
@@ -55,7 +61,7 @@ const AdminDashboard = () => {
     };
 
     fetchDashboard();
-  }, [year]); // 👈 Mỗi khi year thay đổi thì gọi lại API
+  }, [year]); // 👈 Gọi lại khi năm thay đổi
 
   return (
     <div className='min-h-screen bg-gray-100 p-6'>
@@ -98,7 +104,14 @@ const AdminDashboard = () => {
         <ResponsiveContainer width='100%' height={300}>
           <BarChart data={revenueData}>
             <XAxis dataKey='month' />
-            <YAxis />
+            <YAxis
+              type='number'
+              domain={[0, "auto"]}
+              tickFormatter={(value) => `₫${value.toLocaleString("vi-VN")}`}
+              tick={{ dx: -10 }} // Dịch số sang trái
+              width={90} // Tăng chiều rộng của Y-axis để có chỗ
+            />
+
             <Tooltip formatter={(value) => `₫${value.toLocaleString()}`} />
             <Bar dataKey='revenue' fill='#3182CE' />
           </BarChart>

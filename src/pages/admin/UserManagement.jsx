@@ -111,43 +111,43 @@ const UserManagement = () => {
   const columns = [
     {
       title: "Tên đăng nhập",
-      dataIndex: "username",
-      key: "username",
+      dataIndex: "Username",
+      key: "Username",
       align: "middle",
       ellipsis: true,
     },
     {
       title: "Họ tên",
-      dataIndex: "fullName",
-      key: "fullName",
+      dataIndex: "FullName",
+      key: "FullName",
       align: "middle",
       ellipsis: true,
     },
     {
       title: "Email",
-      dataIndex: "email",
-      key: "email",
+      dataIndex: "Email",
+      key: "Email",
       align: "middle",
       ellipsis: true,
     },
     {
       title: "Số điện thoại",
-      dataIndex: "phone",
-      key: "phone",
+      dataIndex: "Phone",
+      key: "Phone",
       align: "middle",
       ellipsis: true,
     },
     {
       title: "Địa chỉ",
-      dataIndex: "address",
-      key: "address",
+      dataIndex: "Address",
+      key: "Address",
       align: "middle",
       ellipsis: true,
     },
     {
       title: "Giới tính",
-      dataIndex: "gender",
-      key: "gender",
+      dataIndex: "Gender",
+      key: "Gender",
       align: "middle",
       render: (gender) => (
         <span className='font-medium text-gray-700'>
@@ -155,28 +155,28 @@ const UserManagement = () => {
         </span>
       ),
     },
-    {
-      title: "Hành động",
-      key: "action",
-      align: "middle",
-      render: (_, record) => (
-        <div className='flex gap-1 flex-wrap'>
-          <Button size='small' onClick={() => showModal(record)}>
-            Sửa
-          </Button>
-          <Popconfirm
-            title='Xác nhận xóa?'
-            onConfirm={() => handleDelete(record.userId)}>
-            <Button size='small' danger>
-              Xóa
-            </Button>
-          </Popconfirm>
-          <Button size='small' onClick={() => showResetModal(record)}>
-            Reset mật khẩu
-          </Button>
-        </div>
-      ),
-    },
+    // {
+    //   title: "Hành động",
+    //   key: "action",
+    //   align: "middle",
+    //   render: (_, record) => (
+    //     <div className='flex gap-1 flex-wrap'>
+    //       <Button size='small' onClick={() => showModal(record)}>
+    //         Sửa
+    //       </Button>
+    //       <Popconfirm
+    //         title='Xác nhận xóa?'
+    //         onConfirm={() => handleDelete(record.userId)}>
+    //         <Button size='small' danger>
+    //           Xóa
+    //         </Button>
+    //       </Popconfirm>
+    //       <Button size='small' onClick={() => showResetModal(record)}>
+    //         Reset mật khẩu
+    //       </Button>
+    //     </div>
+    //   ),
+    // },
   ];
 
   return (

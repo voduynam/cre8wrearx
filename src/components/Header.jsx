@@ -11,31 +11,48 @@ const Header = () => {
 
   const [profile, setProfile] = useState(null);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      try {
-        const profileRes = await fetch("https://thisaonao-001-site1.rtempurl.com/api/users/profile", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!profileRes.ok) throw new Error("Token hết hạn hoặc không hợp lệ!");
-        const profileData = await profileRes.json();
-        console.log("Profile API data:", profileData); // Thêm dòng này
-        setProfile(profileData.Data);
-      } catch (error) {
-        setProfile(null);
-        console.error(error);
-      }
-    };
-    fetchProfile();
-  }, []);
-
   // Lấy thông tin từ Redux
   const { role, isAuthenticated, username } = useSelector(
     (state) => state.user
   );
-  console.log("Auth State:", { role, isAuthenticated, username });
+  console.log("Auth State (from Redux):", { role, isAuthenticated, username });
+
+  // useEffect để fetch profile khi isAuthenticated thay đổi
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+      // Chỉ fetch profile nếu có token và người dùng đã xác thực
+      if (!token || !isAuthenticated) {
+        setProfile(null); // Clear profile if not authenticated or no token
+        return;
+      }
+      try {
+        const profileRes = await fetch(
+          "https://thisaonao-001-site1.rtempurl.com/api/users/profile",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!profileRes.ok) {
+          // Nếu token hết hạn hoặc không hợp lệ, đăng xuất người dùng
+          console.error("Token hết hạn hoặc không hợp lệ! Đăng xuất...");
+          dispatch(logout());
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setProfile(null);
+          return;
+        }
+        const profileData = await profileRes.json();
+        console.log("Profile API data (from fetchProfile):", profileData);
+        setProfile(profileData.Data); // Cập nhật state profile
+      } catch (error) {
+        setProfile(null);
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, [isAuthenticated, dispatch]); // Dependency array: Re-run when isAuthenticated changes
 
   // Lấy giỏ hàng từ Redux
   const cart = useSelector((state) => state.cart.items ?? []);
@@ -45,7 +62,8 @@ const Header = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    dispatch(logout());
+    dispatch(logout()); // Dispatch Redux logout action
+    setProfile(null); // Clear profile state in Header component
     navigate("/login");
   };
 
@@ -54,13 +72,16 @@ const Header = () => {
   const [designDropdownOpen, setDesignDropdownOpen] = useState(false);
   const [dongphuc, setDongphuc] = useState(false);
 
+  // Determine the display name
+  const displayName =
+    profile?.FullName || profile?.fullName || username || "TRANG CÁ NHÂN";
+
   return (
     <header className='bg-black text-white py-2 px-6 flex items-center justify-between relative'>
       {/* Logo */}
       <Link to='/' className='flex items-center space-x-2'>
         <img src={logo} alt='Logo' className='w-16 h-16' />
-        <span className='text-2xl font-bold text-white'>Clothing</span>{" "}
-        {/* Changed from text-3xl to text-2xl */}
+        <span className='text-2xl font-bold text-white'>Clothing</span>
       </Link>
 
       {/* Nút Menu Dropdown (Mobile) */}
@@ -112,7 +133,6 @@ const Header = () => {
                   </button>
                   {designDropdownOpen && (
                     <div className='bg-gray-900'>
-                      {/* <Link to="/design" className="block px-6 py-2 hover:bg-gray-800">TUỲ CHỈNH</Link> */}
                       <Link
                         to='/design/templates'
                         className='block px-6 py-2 hover:bg-gray-800'>
@@ -131,9 +151,9 @@ const Header = () => {
                   to='/cart'
                   className='block px-4 py-2 hover:bg-gray-800 flex items-center'>
                   <ShoppingCart />
-                  {totalItems > 0 && (
+                  {cartItemCount > 0 && ( // Use cartItemCount here
                     <span className='ml-2 bg-red-500 text-white rounded-full text-xs px-2'>
-                      {totalItems}
+                      {cartItemCount}
                     </span>
                   )}
                 </Link>
@@ -167,23 +187,17 @@ const Header = () => {
         {role === "staff" ? (
           <>
             <Link to='/staff' className='hover:text-orange-400 text-base'>
-              {" "}
-              {/* Changed from text-xl to text-base */}
               TRANG NHÂN VIÊN
             </Link>
             <Link
               to='/order-tracking'
               className='hover:text-orange-400 text-base'>
-              {" "}
-              {/* Changed from text-xl to text-base */}
               THEO DÕI ĐƠN HÀNG
             </Link>
           </>
         ) : (
           <>
             <Link to='/' className='hover:text-orange-400 text-base'>
-              {" "}
-              {/* Changed from text-lg to text-base */}
               TRANG CHỦ
             </Link>
 
@@ -258,8 +272,6 @@ const Header = () => {
             </div>
 
             <Link to='/lien-he' className='hover:text-orange-400 text-base'>
-              {" "}
-              {/* Changed from text-xl to text-base */}
               LIÊN HỆ
             </Link>
             <Link to='/cart' className='hover:text-orange-400 relative'>
@@ -277,9 +289,7 @@ const Header = () => {
         {isAuthenticated && (
           <div className='relative group'>
             <button className='hover:text-orange-400 text-base flex items-center'>
-              {" "}
-              {/* Changed from text-xl to text-base */}
-              {profile?.FullName || profile?.fullName || username || "TRANG CÁ NHÂN"} <ChevronDown className='ml-2' />
+              {displayName} <ChevronDown className='ml-2' />
             </button>
             <div className='absolute right-0 top-full w-48 bg-black border border-gray-700 rounded-lg hidden group-hover:block z-50'>
               {role === "member" && (
@@ -308,13 +318,9 @@ const Header = () => {
         {!isAuthenticated && (
           <>
             <Link to='/login' className='hover:text-orange-400 text-base'>
-              {" "}
-              {/* Changed from text-xl to text-base */}
               ĐĂNG NHẬP
             </Link>
             <Link to='/register' className='hover:text-orange-400 text-base'>
-              {" "}
-              {/* Changed from text-xl to text-base */}
               ĐĂNG KÝ
             </Link>
           </>
