@@ -7,7 +7,6 @@ import banner2 from "../../assets copy/slider/banner/banner_ph_3.png";
 import banner3 from "../../assets copy/slider/banner/banner_ph_4.png";
 import banner4 from "../../assets copy/slider/banner/banner_ph_5.png";
 
-
 const data = [
   {
     id: 1,
@@ -41,28 +40,26 @@ const data = [
 
 const FeedbackSlider = () => {
   return (
-    <div className="max-w-screen-xl mx-auto">
+    <div className='max-w-screen-xl mx-auto'>
       <Swiper
         modules={[Navigation, Autoplay]}
         spaceBetween={20}
         slidesPerView={3}
         navigation
         loop
-        autoplay={{ delay: 3000, disableOnInteraction: false }} 
-
-      >
+        autoplay={{ delay: 3000, disableOnInteraction: false }}>
         {data.map((item) => (
           <SwiperSlide key={item.id}>
-            <div className="bg-black text-white p-4 rounded-lg">
+            <div className='bg-black text-white p-4 rounded-lg'>
               <img
                 src={item.img}
                 alt={item.title}
-                className="w-full h-56 object-cover rounded-lg"
+                className='w-full h-56 object-cover rounded-lg'
               />
-              <h3 className="font-bold text-lg mt-2 border-t-2 border-white pt-2">
+              <h3 className='font-bold text-lg mt-2 border-t-2 border-white pt-2'>
                 {item.title}
               </h3>
-              <p className="text-sm">{item.content}</p>
+              <p className='text-sm'>{item.content}</p>
             </div>
           </SwiperSlide>
         ))}

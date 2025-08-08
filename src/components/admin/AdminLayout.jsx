@@ -9,6 +9,11 @@ const AdminLayout = () => {
   const navItems = [
     { label: "Dashboard", icon: <FaHome />, path: "/admin/dashboard" },
     { label: "Người dùng", icon: <FaUser />, path: "/admin/users" },
+    {
+      label: "Quản lý đơn hàng",
+      icon: <FaClipboardList />,
+      path: "/admin/orders",
+    },
   ];
 
   return (

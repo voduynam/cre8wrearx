@@ -42,15 +42,14 @@
 // import CheckPaymentSuccess from "./pages/checkout/CheckPaymentSucces";
 // import CheckPaymentFailed from "./pages/checkout/CheckPaymentFaild";
 
-
 // // Component bảo vệ route dựa trên role
 // const ProtectedRoute = ({ children, allowedRoles }) => {
 //   const { role, isAuthenticated } = useSelector((state) => state.user);
-  
+
 //   if (!isAuthenticated) {
 //     return <Navigate to="/login" replace />;
 //   }
-  
+
 //   // Chuyển đổi role string thành roleId tương ứng
 //   let roleId;
 //   switch(role) {
@@ -66,12 +65,12 @@
 //     default:
 //       roleId = 0; // Không có quyền
 //   }
-  
+
 //   if (!allowedRoles.includes(roleId)) {
 //     console.log(`Access denied: User role ${role} (${roleId}) not in allowed roles ${allowedRoles}`);
 //     return <Navigate to="/" replace />;
 //   }
-  
+
 //   return children;
 // };
 
@@ -83,7 +82,6 @@
 //     <>
 //       {!hideHeaderFooter && <Header />}
 
-      
 //       {/* Chỉ hiển thị Carousel khi ở trang chủ (/) */}
 //       {/* {location.pathname === '/' && <NewProductCarousel />} */}
 //       <main className="min-h-screen bg-gray-50">
@@ -130,7 +128,6 @@
 //           <Route path="/order-status" element={<ProtectedRoute allowedRoles={[3]}><OrderStatus /></ProtectedRoute>} />
 //           <Route path="/profile" element={<ProtectedRoute allowedRoles={[3]}><ProfilePage /></ProtectedRoute>} />
 //           <Route path="/payment-callback" element={<PaymentCallback />} />
-          
 
 //           {/* Fallback route */}
 //           <Route path="*" element={<Navigate to="/" />} />
@@ -150,7 +147,6 @@
 // );
 
 // export default App;
-
 
 import React from "react";
 import { Navigate } from "react-router-dom";
@@ -208,6 +204,7 @@ import CheckPaymentFailed from "./pages/checkout/CheckPaymentFaild";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLayout from "./components/admin/AdminLayout";
 import UserManagement from "./pages/admin/UserManagement";
+import OrderManagement from "./pages/admin/OrderManagement";
 
 // Component bảo vệ route dựa trên role
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -333,7 +330,7 @@ const AppContent = () => {
           <Route
             path='/order-detail/:orderId'
             element={
-              <ProtectedRoute allowedRoles={[2,3]}>
+              <ProtectedRoute allowedRoles={[2, 3]}>
                 <OrderDetail />
               </ProtectedRoute>
             }
@@ -408,6 +405,7 @@ const AppContent = () => {
           <Route path='/admin' element={<AdminLayout />}>
             <Route path='dashboard' element={<AdminDashboard />} />
             <Route path='users' element={<UserManagement />} />
+            <Route path='orders' element={<OrderManagement />} />
           </Route>
           {/* Fallback route */}
           <Route path='*' element={<Navigate to='/' />} />
