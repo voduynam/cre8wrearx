@@ -46,6 +46,7 @@ const OrderManagement = () => {
   const columns = [
     { title: "Mã đơn hàng", dataIndex: "OrderId", key: "OrderId" },
     { title: "Khách hàng", dataIndex: "RecipientName", key: "RecipientName" },
+    { title: "Số điện thoại", dataIndex: "Notes", key: "Notes" },
     {
       title: "Sản phẩm",
       dataIndex: "Products",
