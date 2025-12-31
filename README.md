@@ -1,16 +1,65 @@
-<<<<<<< HEAD
-# cre8wrearx
-=======
-# React + Vite
+ Website Bán Quần Áo
+ Giới thiệu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Đây là website bán quần áo được xây dựng bằng React.js, Redux Toolkit và RESTful API.
+Dự án mô phỏng một hệ thống thương mại điện tử cơ bản, cho phép người dùng xem sản phẩm, xem chi tiết, thêm vào giỏ hàng và quản lý giỏ hàng.
 
-Currently, two official plugins are available:
+ Chức năng chính
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Giao diện thân thiện, responsive
 
-## Expanding the ESLint configuration
+Hiển thị danh sách sản phẩm quần áo
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
->>>>>>> duy
+Xem chi tiết sản phẩm
+
+Thêm sản phẩm vào giỏ hàng
+
+Tăng / giảm số lượng sản phẩm
+
+Xóa sản phẩm khỏi giỏ hàng
+
+Tự động tính tổng tiền
+
+Lấy dữ liệu động từ RESTful API
+
+Quản lý trạng thái toàn cục bằng Redux Toolkit
+
+Công nghệ sử dụng
+Front-end
+
+React.js
+
+Redux Toolkit
+
+React Router DOM
+
+Axios
+
+HTML5, CSS3, JavaScript (ES6+)
+
+Backend / API
+
+RESTful API
+
+JSON Server / .net API (tùy theo cách bạn triển khai)
+ Quản lý trạng thái (Redux)
+
+Sử dụng Redux Toolkit để quản lý trạng thái ứng dụng
+
+State giỏ hàng bao gồm:
+
+Danh sách sản phẩm
+
+Số lượng
+
+Tổng tiền
+
+Các action chính:
+
+addToCart
+
+removeFromCart
+
+updateQuantity
+
+clearCart
